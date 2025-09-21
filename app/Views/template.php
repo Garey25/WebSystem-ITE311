@@ -11,10 +11,15 @@
     <!-- Custom Spotify-Like Styles -->
     <style>
         body {
-            background-color: #121212;
             font-family: 'Poppins', sans-serif;
+        }
+        
+        <?php if (uri_string() != 'login' && uri_string() != 'register'): ?>
+        body {
+            background-color: #121212;
             color: #ffffff;
         }
+        <?php endif; ?>
 
         .navbar {
             background-color: #181818;
@@ -94,6 +99,7 @@
 </head>
 <body>
 
+<?php if (uri_string() != 'login' && uri_string() != 'register'): ?>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
@@ -117,11 +123,16 @@
         </div>
     </div>
 </nav>
+<?php endif; ?>
 
 <!-- Page Content -->
-<div class="container">
+<?php if (uri_string() == 'login' || uri_string() == 'register'): ?>
     <?= $this->renderSection('content') ?>
-</div>
+<?php else: ?>
+    <div class="container">
+        <?= $this->renderSection('content') ?>
+    </div>
+<?php endif; ?>
 
 </body>
 </html>
