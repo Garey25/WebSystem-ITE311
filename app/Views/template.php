@@ -99,6 +99,7 @@
 </head>
 <body>
 
+<?php $isLoggedIn = session('isLoggedIn') ?? false; $role = session('role') ?? null; ?>
 <?php if (uri_string() != 'login' && uri_string() != 'register'): ?>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg">
@@ -119,6 +120,43 @@
                 <li class="nav-item">
                     <a class="nav-link <?= uri_string() == 'contact' ? 'active' : '' ?>" href="<?= site_url('contact') ?>">Contact</a>
                 </li>
+
+                <?php if ($isLoggedIn): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= uri_string() == 'dashboard' ? 'active' : '' ?>" href="<?= site_url('dashboard') ?>">Dashboard</a>
+                    </li>
+
+                    <?php if ($role === 'admin'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Users</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Courses</a>
+                        </li>
+                    <?php elseif ($role === 'teacher'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">My Courses</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Quizzes</a>
+                        </li>
+                    <?php elseif ($role === 'student'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">My Enrollments</a>
+                        </li>
+                    <?php endif; ?>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= site_url('logout') ?>">Logout</a>
+                    </li>
+                <?php else: ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= site_url('login') ?>">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= site_url('register') ?>">Register</a>
+                    </li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
@@ -130,6 +168,12 @@
     <?= $this->renderSection('content') ?>
 <?php else: ?>
     <div class="container">
+        <?php if (session('success')): ?>
+            <div class="alert alert-success"><?= esc(session('success')) ?></div>
+        <?php endif; ?>
+        <?php if (session('error')): ?>
+            <div class="alert alert-danger"><?= esc(session('error')) ?></div>
+        <?php endif; ?>
         <?= $this->renderSection('content') ?>
     </div>
 <?php endif; ?>
