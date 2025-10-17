@@ -6,6 +6,7 @@
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom Styles -->
@@ -117,19 +118,64 @@
             <li class="nav-item"><a class="nav-link" href="<?= site_url('contact') ?>">Contact</a></li>
 
             <?php if ($isLoggedIn): ?>
-                <li class="nav-item"><a class="nav-link" href="<?= site_url('dashboard') ?>">Dashboard</a></li>
+                <li class="nav-item">
+                    <a class="nav-link <?= uri_string() === 'dashboard' ? 'active' : '' ?>" href="<?= site_url('dashboard') ?>">
+                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </a>
+                </li>
 
                 <?php if ($role === 'admin'): ?>
-                    <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Courses</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-people me-1"></i>Manage
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="#">Users</a></li>
+                            <li><a class="dropdown-item" href="#">Courses</a></li>
+                            <li><a class="dropdown-item" href="#">System Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Reports</a></li>
+                        </ul>
+                    </li>
                 <?php elseif ($role === 'teacher'): ?>
-                    <li class="nav-item"><a class="nav-link" href="#">My Courses</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Quizzes</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-book me-1"></i>Teaching
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="#">My Courses</a></li>
+                            <li><a class="dropdown-item" href="#">Create Course</a></li>
+                            <li><a class="dropdown-item" href="#">Quizzes</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Grade Submissions</a></li>
+                        </ul>
+                    </li>
                 <?php elseif ($role === 'student'): ?>
-                    <li class="nav-item"><a class="nav-link" href="#">My Enrollments</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-mortarboard me-1"></i>Learning
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="#">My Enrollments</a></li>
+                            <li><a class="dropdown-item" href="#">Browse Courses</a></li>
+                            <li><a class="dropdown-item" href="#">My Grades</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Progress Report</a></li>
+                        </ul>
+                    </li>
                 <?php endif; ?>
 
-                <li class="nav-item"><a class="nav-link" href="<?= site_url('logout') ?>">Logout</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i><?= esc(session('name')) ?>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="#">Profile</a></li>
+                        <li><a class="dropdown-item" href="#">Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="<?= site_url('logout') ?>">Logout</a></li>
+                    </ul>
+                </li>
             <?php else: ?>
                 <li class="nav-item"><a class="nav-link" href="<?= site_url('login') ?>">Login</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= site_url('register') ?>">Register</a></li>

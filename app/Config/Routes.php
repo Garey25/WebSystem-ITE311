@@ -21,5 +21,28 @@ $routes->get('logout', 'Auth::logout');
 $routes->get('register', 'Auth::register');
 $routes->post('register', 'Auth::store');
 
-// Protected dashboard route
-$routes->get('dashboard', 'Auth::dashboard');
+// Additional protected routes (will be implemented later)
+$routes->group('', ['filter' => 'auth'], function($routes) {
+    // Protected dashboard route
+    $routes->get('dashboard', 'Auth::dashboard');
+    // Admin routes
+    $routes->group('admin', function($routes) {
+        $routes->get('users', 'Admin::users');
+        $routes->get('courses', 'Admin::courses');
+        $routes->get('settings', 'Admin::settings');
+    });
+    
+    // Teacher routes
+    $routes->group('teacher', function($routes) {
+        $routes->get('courses', 'Teacher::courses');
+        $routes->get('quizzes', 'Teacher::quizzes');
+        $routes->get('grades', 'Teacher::grades');
+    });
+    
+    // Student routes
+    $routes->group('student', function($routes) {
+        $routes->get('enrollments', 'Student::enrollments');
+        $routes->get('grades', 'Student::grades');
+        $routes->get('progress', 'Student::progress');
+    });
+});
