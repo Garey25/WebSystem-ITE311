@@ -10,6 +10,8 @@ class Auth extends BaseController
     public function login()
     {
         if ($this->request->getMethod() === 'post') {
+            // Debug: Log the POST data
+            log_message('info', 'Login attempt - POST data: ' . json_encode($this->request->getPost()));
             $rules = [
                 'email' => 'required|valid_email',
                 'password' => 'required'
@@ -28,7 +30,14 @@ class Auth extends BaseController
             $userModel = new UserModel();
             $user = $userModel->where('email', $email)->first();
             
+            // Debug: Log user lookup result
+            log_message('info', 'User lookup for email: ' . $email . ' - Found: ' . ($user ? 'YES' : 'NO'));
+            if ($user) {
+                log_message('info', 'User data: ' . json_encode($user));
+            }
+            
             if (! $user) {
+                log_message('info', 'User not found for email: ' . $email);
                 return redirect()->back()->withInput()->with('login_error', 'User not found.');
             }
             
@@ -76,8 +85,8 @@ class Auth extends BaseController
 
     public function dashboard()
     {
-        // Authorization check - ensure user is logged in
-        if (! $this->requireLogin()) {
+        // Simple check - if not logged in, redirect to login
+        if (!session('isLoggedIn')) {
             return redirect()->to(site_url('login'))->with('error', 'Please log in first.');
         }
 

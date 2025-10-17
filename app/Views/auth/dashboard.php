@@ -1,4 +1,4 @@
-<?= $this->extend('layouts/main') ?>
+<?= $this->extend('template') ?>
 <?= $this->section('content') ?>
 
 <?php $role = esc($role ?? 'student'); ?>

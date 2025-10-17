@@ -21,10 +21,11 @@ $routes->get('logout', 'Auth::logout');
 $routes->get('register', 'Auth::register');
 $routes->post('register', 'Auth::store');
 
+// Dashboard route (temporarily without auth filter)
+$routes->get('dashboard', 'Auth::dashboard');
+
 // Additional protected routes (will be implemented later)
 $routes->group('', ['filter' => 'auth'], function($routes) {
-    // Protected dashboard route
-    $routes->get('dashboard', 'Auth::dashboard');
     // Admin routes
     $routes->group('admin', function($routes) {
         $routes->get('users', 'Admin::users');
