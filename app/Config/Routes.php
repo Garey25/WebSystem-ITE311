@@ -15,14 +15,14 @@ $routes->get('contact', 'Home::contact');
 
 // Authentication routes
 $routes->get('login', 'Auth::login');
-$routes->post('login', 'Auth::login');
+$routes->post('login', 'Auth::attempt');
 $routes->get('logout', 'Auth::logout');
 
 $routes->get('register', 'Auth::register');
 $routes->post('register', 'Auth::store');
 
-// Dashboard route (temporarily without auth filter)
-$routes->get('dashboard', 'Auth::dashboard');
+// Dashboard route (protected by auth filter)
+$routes->get('dashboard', 'Auth::dashboard', ['filter' => 'auth']);
 
 // Additional protected routes (will be implemented later)
 $routes->group('', ['filter' => 'auth'], function($routes) {

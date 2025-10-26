@@ -9,65 +9,72 @@ class Auth extends BaseController
 
     public function login()
     {
-        if ($this->request->getMethod() === 'post') {
-            // Debug: Log the POST data
-            log_message('info', 'Login attempt - POST data: ' . json_encode($this->request->getPost()));
-            $rules = [
-                'email' => 'required|valid_email',
-                'password' => 'required'
-            ];
-            
-            if (! $this->validate($rules)) {
-                return view('auth/login', [
-                    'title' => 'Login',
-                    'validation' => $this->validator,
-                ]);
-            }
-
-            $email = $this->request->getPost('email');
-            $password = $this->request->getPost('password');
-
-            $userModel = new UserModel();
-            $user = $userModel->where('email', $email)->first();
-            
-            // Debug: Log user lookup result
-            log_message('info', 'User lookup for email: ' . $email . ' - Found: ' . ($user ? 'YES' : 'NO'));
-            if ($user) {
-                log_message('info', 'User data: ' . json_encode($user));
-            }
-            
-            if (! $user) {
-                log_message('info', 'User not found for email: ' . $email);
-                return redirect()->back()->withInput()->with('login_error', 'User not found.');
-            }
-            
-            if (! password_verify($password, $user['password'])) {
-                return redirect()->back()->withInput()->with('login_error', 'Invalid password.');
-            }
-
-            // Successful login - regenerate session for security
-            session()->regenerate();
-            
-            // Set comprehensive session data
-            $sessionData = [
-                'user_id' => $user['id'],
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'role' => $user['role'] ?? 'student',
-                'isLoggedIn' => true,
-                'login_time' => time(),
-            ];
-            
-            session()->set($sessionData);
-
-            // Log successful login
-            log_message('info', 'Login successful for user: ' . $user['email'] . ' with role: ' . ($user['role'] ?? 'student'));
-
-            // Redirect to unified dashboard for all users
-            return redirect()->to(site_url('dashboard'))->with('success', 'Welcome back, ' . $user['name'] . '! You are logged in as ' . ucfirst($user['role'] ?? 'student'));
+        // If already logged in, redirect to dashboard
+        if (session('isLoggedIn')) {
+            return redirect()->to(site_url('dashboard'));
         }
 
         return view('auth/login', ['title' => 'Login']);
+    }
+
+    public function attempt()
+    {
+        // Debug: Log the POST data
+        log_message('info', 'Login attempt - POST data: ' . json_encode($this->request->getPost()));
+        
+        $rules = [
+            'email' => 'required|valid_email',
+            'password' => 'required'
+        ];
+        
+        if (! $this->validate($rules)) {
+            return view('auth/login', [
+                'title' => 'Login',
+                'validation' => $this->validator,
+            ]);
+        }
+
+        $email = $this->request->getPost('email');
+        $password = $this->request->getPost('password');
+
+        $userModel = new UserModel();
+        $user = $userModel->where('email', $email)->first();
+        
+        // Debug: Log user lookup result
+        log_message('info', 'User lookup for email: ' . $email . ' - Found: ' . ($user ? 'YES' : 'NO'));
+        if ($user) {
+            log_message('info', 'User data: ' . json_encode($user));
+        }
+        
+        if (! $user) {
+            log_message('info', 'User not found for email: ' . $email);
+            return redirect()->back()->withInput()->with('login_error', 'User not found.');
+        }
+        
+        if (! password_verify($password, $user['password'])) {
+            return redirect()->back()->withInput()->with('login_error', 'Invalid password.');
+        }
+
+        // Successful login - regenerate session for security
+        session()->regenerate();
+        
+        // Set comprehensive session data
+        $sessionData = [
+            'user_id' => $user['id'],
+            'name' => $user['name'],
+            'email' => $user['email'],
+            'role' => $user['role'] ?? 'student',
+            'isLoggedIn' => true,
+            'login_time' => time(),
+        ];
+        
+        session()->set($sessionData);
+
+        // Log successful login
+        log_message('info', 'Login successful for user: ' . $user['email'] . ' with role: ' . ($user['role'] ?? 'student'));
+
+        // Redirect to unified dashboard for all users
+        return redirect()->to(site_url('dashboard'))->with('success', 'Welcome back, ' . $user['name'] . '! You are logged in as ' . ucfirst($user['role'] ?? 'student'));
     }
 
     private function requireLogin()
