@@ -55,6 +55,9 @@ class Home extends BaseController
             $data['availableCourses'] = array_filter($allCourses, function($course) use ($enrolledCourseIds) {
                 return !in_array($course['id'], $enrolledCourseIds);
             });
+        } elseif ($role === 'admin' || $role === 'teacher') {
+            // Provide course list for upload management
+            $data['allCourses'] = $this->courseModel->getAllCourses();
         }
 
         return view('dashboard', $data);

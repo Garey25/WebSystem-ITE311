@@ -70,10 +70,27 @@
                 </div>
             </div>
         </div>
-    <?php else: ?>
-        <div class="card shadow-sm border-0">
+    <?php elseif (session('role') === 'admin' || session('role') === 'teacher'): ?>
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Manage Course Materials</h5>
+            </div>
             <div class="card-body">
-                <p class="mb-0">This is a protected page only visible after login.</p>
+                <?php if (isset($allCourses) && !empty($allCourses)): ?>
+                    <div class="list-group">
+                        <?php foreach ($allCourses as $course): ?>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><?= esc($course['title']) ?></h6>
+                                    <p class="mb-1 text-muted"><?= esc($course['description']) ?></p>
+                                </div>
+                                <a class="btn btn-primary btn-sm" href="<?= site_url('admin/course/' . $course['id'] . '/upload') ?>">Upload Material</a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p class="text-muted mb-0">No courses available.</p>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
