@@ -22,7 +22,10 @@ $routes->get('register', 'Auth::register');
 $routes->post('register', 'Auth::store');
 
 // Dashboard route (protected by auth filter)
-$routes->get('dashboard', 'Auth::dashboard', ['filter' => 'auth']);
+$routes->get('dashboard', 'Home::dashboard', ['filter' => 'auth']);
+
+// Course enrollment route (protected by auth filter)
+$routes->post('course/enroll', 'Course::enroll', ['filter' => 'auth']);
 
 // Additional protected routes (will be implemented later)
 $routes->group('', ['filter' => 'auth'], function($routes) {
