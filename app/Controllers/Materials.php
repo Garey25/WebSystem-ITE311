@@ -29,19 +29,23 @@ class Materials extends BaseController
             return view('materials/upload', ['course' => $course]);
         }
 
-        $rules = [
-            'material' => [
-                'label' => 'Material File',
-                'rules' => 'uploaded[material]|max_size[material,10240]|ext_in[material,pdf,ppt,pptx,doc,docx,zip,rar,txt]'
-            ]
-        ];
-        if (! $this->validate($rules)) {
-            return redirect()->back()->with('error', implode(' ', $this->validator->getErrors()))->withInput();
+        // POST: handle upload with explicit checks to avoid redirecting to wrong referer
+        $file = $this->request->getFile('material');
+        if ($file === null || ! $file->isValid()) {
+            return redirect()->to(site_url('admin/course/' . $course_id . '/upload'))
+                ->with('error', 'Please choose a valid file to upload.');
         }
 
-        $file = $this->request->getFile('material');
-        if (! $file->isValid()) {
-            return redirect()->back()->with('error', $file->getErrorString());
+        // Enforce size (<= 10MB) and extensions
+        $allowedExt = ['pdf','ppt','pptx','doc','docx','zip','rar','txt'];
+        $ext = strtolower($file->getExtension() ?? '');
+        if (! in_array($ext, $allowedExt, true)) {
+            return redirect()->to(site_url('admin/course/' . $course_id . '/upload'))
+                ->with('error', 'Invalid file type. Allowed: ' . implode(', ', $allowedExt));
+        }
+        if ($file->getSize() > 10 * 1024 * 1024) { // 10MB
+            return redirect()->to(site_url('admin/course/' . $course_id . '/upload'))
+                ->with('error', 'File too large. Max size is 10MB.');
         }
 
         $originalName = $file->getClientName();
@@ -59,7 +63,7 @@ class Materials extends BaseController
         ]);
 
         return redirect()->to(site_url('admin/course/' . $course_id . '/upload'))
-                         ->with('success', 'Material uploaded successfully');
+            ->with('success', 'Material uploaded successfully');
     }
 
     public function delete($material_id)
