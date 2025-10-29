@@ -10,11 +10,174 @@
         Welcome, <?= esc(session('userEmail')) ?>!
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <p class="mb-0">This is a protected page only visible after login.</p>
+    <!-- Alert container for messages -->
+    <div id="alert-container" class="mt-3"></div>
+
+    <?php if (session('role') === 'student'): ?>
+        <!-- Enrolled Courses Section -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">My Enrolled Courses</h5>
+            </div>
+            <div class="card-body">
+                <div id="enrolled-courses">
+                    <?php if (isset($enrolledCourses) && !empty($enrolledCourses)): ?>
+                        <div class="list-group">
+                            <?php foreach ($enrolledCourses as $enrollment): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1"><?= esc($enrollment['course_title']) ?></h6>
+                                        <p class="mb-1 text-muted"><?= esc($enrollment['course_description']) ?></p>
+                                        <small class="text-muted">Enrolled: <?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></small>
+                                    </div>
+                                    <span class="badge bg-success">Enrolled</span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted mb-0">You are not enrolled in any courses yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Available Courses Section -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Available Courses</h5>
+            </div>
+            <div class="card-body">
+                <div id="available-courses">
+                    <?php if (isset($availableCourses) && !empty($availableCourses)): ?>
+                        <div class="list-group">
+                            <?php foreach ($availableCourses as $course): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1"><?= esc($course['title']) ?></h6>
+                                        <p class="mb-1 text-muted"><?= esc($course['description']) ?></p>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm enroll-btn" 
+                                            data-course-id="<?= $course['id'] ?>"
+                                            data-course-title="<?= esc($course['title']) ?>">
+                                        Enroll
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted mb-0">No courses available at the moment.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <p class="mb-0">This is a protected page only visible after login.</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- jQuery and AJAX Script -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Handle enroll button clicks
+            $('.enroll-btn').on('click', function(e) {
+                e.preventDefault();
+                
+                const button = $(this);
+                const courseId = button.data('course-id');
+                const courseTitle = button.data('course-title');
+                
+                // Disable button and show loading state
+                button.prop('disabled', true).text('Enrolling...');
+                
+                // Send AJAX request
+                $.ajax({
+                    url: '<?= base_url('course/enroll') ?>',
+                    type: 'POST',
+                    data: {
+                        course_id: courseId,
+                        <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log('Response:', response); // Debug log
+                        if (response.success) {
+                            // Show success message
+                            showAlert('success', response.message);
+                            
+                            // Hide the button and show enrolled status
+                            button.replaceWith('<span class="badge bg-success">Enrolled</span>');
+                            
+                            // Add course to enrolled courses list
+                            addToEnrolledCourses(courseId, courseTitle);
+                        } else {
+                            // Show error message
+                            showAlert('danger', response.message);
+                            
+                            // Re-enable button
+                            button.prop('disabled', false).text('Enroll');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error:', xhr.responseText); // Debug log
+                        // Show error message
+                        showAlert('danger', 'An error occurred. Please try again.');
+                        
+                        // Re-enable button
+                        button.prop('disabled', false).text('Enroll');
+                    }
+                });
+            });
+            
+            // Function to show alert messages
+            function showAlert(type, message) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                $('#alert-container').html(alertHtml);
+                
+                // Auto-hide after 5 seconds
+                setTimeout(function() {
+                    $('.alert').fadeOut();
+                }, 5000);
+            }
+            
+            // Function to add course to enrolled courses list
+            function addToEnrolledCourses(courseId, courseTitle) {
+                const enrolledCoursesDiv = $('#enrolled-courses');
+                const currentDate = new Date().toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                // Check if there are existing enrolled courses
+                if (enrolledCoursesDiv.find('.list-group').length === 0) {
+                    enrolledCoursesDiv.html('<div class="list-group"></div>');
+                }
+                
+                // Add new enrolled course
+                const newCourseHtml = `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${courseTitle}</h6>
+                            <p class="mb-1 text-muted">Course description</p>
+                            <small class="text-muted">Enrolled: ${currentDate}</small>
+                        </div>
+                        <span class="badge bg-success">Enrolled</span>
+                    </div>
+                `;
+                
+                enrolledCoursesDiv.find('.list-group').append(newCourseHtml);
+            }
+        });
+    </script>
 
 <style>
 body {
