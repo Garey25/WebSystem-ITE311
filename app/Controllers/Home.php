@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\CourseModel;
 use App\Models\EnrollmentModel;
+use App\Models\MaterialModel;
 
 class Home extends BaseController
 {
@@ -55,6 +56,18 @@ class Home extends BaseController
             $data['availableCourses'] = array_filter($allCourses, function($course) use ($enrolledCourseIds) {
                 return !in_array($course['id'], $enrolledCourseIds);
             });
+            
+            // Fetch materials for each enrolled course
+            $materialModel = new MaterialModel();
+            foreach ($data['enrolledCourses'] as &$enrollment) {
+                try {
+                    $enrollment['materials'] = $materialModel->getMaterialsByCourse($enrollment['course_id']);
+                } catch (\Exception $e) {
+                    // If materials table doesn't exist yet, set empty array
+                    $enrollment['materials'] = [];
+                }
+            }
+            unset($enrollment); // Unset reference
         } elseif ($role === 'admin' || $role === 'teacher') {
             // Provide course list for upload management
             $data['allCourses'] = $this->courseModel->getAllCourses();

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\MaterialModel;
 
 class Auth extends BaseController
 {
@@ -173,13 +174,25 @@ class Auth extends BaseController
             
             // Student-specific data
             $data['my_enrollments'] = $db->table('enrollments')
-                ->select('enrollments.*, courses.title as course_title, courses.description')
+                ->select('enrollments.*, courses.title as course_title, courses.description, courses.id as course_id')
                 ->join('courses', 'courses.id = enrollments.course_id')
                 ->where('enrollments.user_id', $userId)
                 ->orderBy('enrollments.enrolled_at', 'DESC')
                 ->limit(5)
                 ->get()
                 ->getResultArray();
+            
+            // Fetch materials for each enrolled course
+            $materialModel = new MaterialModel();
+            foreach ($data['my_enrollments'] as &$enrollment) {
+                try {
+                    $enrollment['materials'] = $materialModel->getMaterialsByCourse($enrollment['course_id']);
+                } catch (\Exception $e) {
+                    // If materials table doesn't exist yet, set empty array
+                    $enrollment['materials'] = [];
+                }
+            }
+            unset($enrollment); // Unset reference
         }
 
         return view('auth/dashboard', $data);
