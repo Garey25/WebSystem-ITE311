@@ -24,13 +24,49 @@
                     <?php if (isset($enrolledCourses) && !empty($enrolledCourses)): ?>
                         <div class="list-group">
                             <?php foreach ($enrolledCourses as $enrollment): ?>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1"><?= esc($enrollment['course_title']) ?></h6>
-                                        <p class="mb-1 text-muted"><?= esc($enrollment['course_description']) ?></p>
-                                        <small class="text-muted">Enrolled: <?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></small>
+                                <div class="list-group-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1"><?= esc($enrollment['course_title']) ?></h6>
+                                            <p class="mb-1 text-muted"><?= esc($enrollment['course_description']) ?></p>
+                                            <small class="text-muted">Enrolled: <?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></small>
+                                        </div>
+                                        <span class="badge bg-success">Enrolled</span>
                                     </div>
-                                    <span class="badge bg-success">Enrolled</span>
+                                    
+                                    <!-- Course Materials Section -->
+                                    <?php if (!empty($enrollment['materials'])): ?>
+                                        <div class="mt-3 pt-3 border-top">
+                                            <h6 class="mb-2 text-primary">
+                                                <i class="bi bi-file-earmark"></i> Course Materials (<?= count($enrollment['materials']) ?>)
+                                            </h6>
+                                            <div class="list-group list-group-flush">
+                                                <?php foreach ($enrollment['materials'] as $material): ?>
+                                                    <div class="list-group-item px-0 py-2 bg-transparent">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <i class="bi bi-file-earmark-text me-2"></i>
+                                                                <span><?= esc($material['file_name']) ?></span>
+                                                                <small class="text-muted ms-2">
+                                                                    (<?= date('M j, Y', strtotime($material['created_at'])) ?>)
+                                                                </small>
+                                                            </div>
+                                                            <a href="<?= site_url('materials/download/' . $material['id']) ?>" 
+                                                               class="btn btn-sm btn-outline-primary">
+                                                                <i class="bi bi-download"></i> Download
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="mt-2 pt-2 border-top">
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i> No materials available for this course yet.
+                                            </small>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -201,7 +237,7 @@ body {
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     position: relative;
-    overflow: hidden;
+    overflow: auto;
 }
 
 body::before {
