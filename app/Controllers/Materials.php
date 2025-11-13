@@ -21,7 +21,7 @@ class Materials extends BaseController
 
     public function upload($course_id)
     {
-        if ($this->request->getMethod() === 'get') {
+        if (! $this->request->is('post')) {
             $course = $this->courseModel->find($course_id);
             if (! $course) {
                 return redirect()->back()->with('error', 'Course not found');
