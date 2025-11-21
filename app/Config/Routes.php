@@ -33,6 +33,10 @@ $routes->post('admin/course/(:num)/upload', 'Materials::upload/$1', ['filter' =>
 $routes->get('materials/delete/(:num)', 'Materials::delete/$1', ['filter' => 'auth']);
 $routes->get('materials/download/(:num)', 'Materials::download/$1', ['filter' => 'auth']);
 
+// Notifications routes
+$routes->get('notifications', 'Notifications::get', ['filter' => 'auth']);
+$routes->post('notifications/mark_read/(:num)', 'Notifications::mark_as_read/$1', ['filter' => 'auth']);
+
 // Additional protected routes (will be implemented later)
 $routes->group('', ['filter' => 'auth'], function($routes) {
     // Admin routes
