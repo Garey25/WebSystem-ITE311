@@ -18,6 +18,17 @@ class Course extends BaseController
     }
 
     /**
+     * Display all courses listing page
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function index()
+    {
+        $courses = $this->courseModel->getAllCourses();
+        return view('courses/index', ['courses' => $courses]);
+    }
+
+    /**
      * Handle course enrollment via AJAX
      *
      * @return \CodeIgniter\HTTP\ResponseInterface
@@ -102,5 +113,42 @@ class Course extends BaseController
                 'message' => 'Failed to enroll in course. Please try again.'
             ]);
         }
+    }
+
+    /**
+     * Search courses
+     * Handles both AJAX and regular requests
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function search()
+    {
+        $searchTerm = $this->request->getGet('search') ?? $this->request->getPost('search_term') ?? '';
+        
+        if (empty($searchTerm)) {
+            $courses = $this->courseModel->getAllCourses();
+        } else {
+            $courses = $this->courseModel->searchCourses($searchTerm);
+        }
+
+        // Return JSON for AJAX requests
+        if ($this->request->isAJAX()) {
+            // Format courses for JSON response
+            $formattedCourses = [];
+            foreach ($courses as $course) {
+                $formattedCourses[] = [
+                    'id' => $course['id'],
+                    'name' => $course['title'],
+                    'description' => $course['description'] ?? ''
+                ];
+            }
+            return $this->response->setJSON($formattedCourses);
+        }
+
+        // Return view for regular requests
+        return view('courses/index', [
+            'courses' => $courses,
+            'searchTerm' => $searchTerm
+        ]);
     }
 }

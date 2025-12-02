@@ -24,7 +24,10 @@ $routes->post('register', 'Auth::store');
 // Dashboard route (protected by auth filter)
 $routes->get('dashboard', 'Home::dashboard', ['filter' => 'auth']);
 
-// Course enrollment route (protected by auth filter)
+// Course routes
+$routes->get('courses', 'Course::index');
+$routes->get('courses/search', 'Course::search');
+$routes->post('courses/search', 'Course::search');
 $routes->post('course/enroll', 'Course::enroll', ['filter' => 'auth']);
 
 // Materials routes

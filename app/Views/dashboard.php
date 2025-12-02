@@ -76,10 +76,23 @@
                 </div>
                 <span class="badge bg-success bg-opacity-10 text-success px-3 py-2"><?= $enrolledCount ?> active</span>
             </div>
-            <div class="card-body" id="enrolled-courses">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" id="enrolledSearchInput" class="form-control"
+                                placeholder="Search your enrolled courses..." 
+                                style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                            <span class="input-group-text" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                                <i class="bi bi-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div id="enrolled-courses">
                 <?php if (!empty($enrolledCourses)): ?>
                     <?php foreach ($enrolledCourses as $enrollment): ?>
-                        <div class="course-block mb-3">
+                        <div class="course-block mb-3 enrolled-course-item">
                             <div class="d-flex justify-content-between flex-wrap">
                                 <div class="pe-3">
                                     <h6 class="fw-semibold mb-1"><?= esc($enrollment['course_title']) ?></h6>
@@ -258,7 +271,7 @@
             });
 
             const block = `
-                <div class="course-block mb-3">
+                <div class="course-block mb-3 enrolled-course-item">
                     <div class="d-flex justify-content-between flex-wrap">
                         <div class="pe-3">
                             <h6 class="fw-semibold mb-1">${courseTitle}</h6>
@@ -274,16 +287,27 @@
 
             enrolledContainer.prepend(block);
         }
+
+        // Search functionality for enrolled courses (student dashboard)
+        $('#enrolledSearchInput').on('keyup', function() {
+            const searchTerm = $(this).val().toLowerCase();
+            $('.enrolled-course-item').each(function() {
+                const courseText = $(this).text().toLowerCase();
+                $(this).toggle(courseText.indexOf(searchTerm) > -1);
+            });
+        });
     });
 </script>
 
 <style>
 :root {
-    --dashboard-bg: #111315;
-    --card-bg: #1b1f24;
-    --card-border: rgba(255, 255, 255, 0.08);
-    --text-muted: #9da7b5;
-    --accent: #1db954;
+    --dashboard-bg: #003049;
+    --card-bg: rgba(0, 48, 73, 0.6);
+    --card-border: rgba(247, 127, 0, 0.3);
+    --text-muted: #EAE2B7;
+    --accent: #F77F00;
+    --accent-light: #FCBF49;
+    --danger: #D62828;
 }
 
 .dashboard-wrapper {
@@ -293,9 +317,10 @@
 }
 
 .dashboard-hero {
-    background: linear-gradient(120deg, #1f2937, #111827);
-    color: #fff;
+    background: linear-gradient(120deg, #003049, rgba(0, 48, 73, 0.8));
+    color: #EAE2B7;
     border-radius: 1.25rem;
+    border: 1px solid rgba(247, 127, 0, 0.3);
 }
 
 .dashboard-hero .btn-outline-light {
@@ -307,26 +332,26 @@
     background: var(--card-bg);
     border-radius: 1rem;
     border: 1px solid var(--card-border);
-    color: #fff;
+    color: #EAE2B7;
 }
 
 .dashboard-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 1.25rem;
-    color: #fff;
+    color: #EAE2B7;
 }
 
 .dashboard-card .card-header {
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(247, 127, 0, 0.2);
     background: transparent;
 }
 
 .course-block,
 .course-row,
 .material-tile {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.04);
+    background: rgba(234, 226, 183, 0.05);
+    border: 1px solid rgba(247, 127, 0, 0.2);
     border-radius: 1rem;
     padding: 1.25rem;
 }
@@ -353,9 +378,9 @@
 .empty-state {
     text-align: center;
     padding: 2rem 1rem;
-    border: 1px dashed rgba(255,255,255,0.2);
+    border: 1px dashed rgba(247, 127, 0, 0.3);
     border-radius: 1rem;
-    color: #fff;
+    color: #EAE2B7;
 }
 
 .text-muted {
@@ -363,17 +388,34 @@
 }
 
 .badge.bg-success-subtle {
-    background-color: rgba(74, 222, 128, 0.15) !important;
-    color: #4ade80 !important;
+    background-color: rgba(252, 191, 73, 0.2) !important;
+    color: #FCBF49 !important;
 }
 
 .badge.bg-primary.bg-opacity-10 {
-    background-color: rgba(59, 130, 246, 0.15) !important;
-    color: #93c5fd !important;
+    background-color: rgba(247, 127, 0, 0.2) !important;
+    color: #F77F00 !important;
 }
 
 .badge.bg-success {
-    background-color: #22c55e !important;
+    background-color: #FCBF49 !important;
+    color: #003049 !important;
+}
+
+.badge.bg-success.bg-opacity-10 {
+    background-color: rgba(252, 191, 73, 0.2) !important;
+    color: #FCBF49 !important;
+}
+
+#enrolledSearchInput::placeholder {
+    color: rgba(234, 226, 183, 0.5);
+}
+
+#enrolledSearchInput:focus {
+    background-color: rgba(234, 226, 183, 0.1) !important;
+    border-color: #F77F00 !important;
+    color: #EAE2B7 !important;
+    box-shadow: 0 0 0 0.2rem rgba(247, 127, 0, 0.25);
 }
 
 @media (max-width: 767px) {

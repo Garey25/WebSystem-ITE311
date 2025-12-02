@@ -12,62 +12,93 @@
         }
         <?php if (uri_string() != 'login' && uri_string() != 'register'): ?>
         body {
-            background-color: #121212;
-            color: #ffffff;
+            background-color: #003049;
+            color: #EAE2B7;
         }
         <?php endif; ?>
         .navbar {
-            background-color: #181818;
+            background-color: #003049;
             padding: 1rem 2rem;
+            border-bottom: 2px solid #F77F00;
         }
         .navbar-brand {
             font-weight: 600;
-            color: #1DB954 !important;
+            color: #FCBF49 !important;
             font-size: 1.5rem;
         }
         .nav-link {
-            color: #b3b3b3 !important;
+            color: #EAE2B7 !important;
             font-weight: 500;
             margin-right: 1rem;
             transition: color 0.3s;
         }
         .nav-link:hover,
         .nav-link.active {
-            color: #ffffff !important;
+            color: #FCBF49 !important;
         }
         .container {
-            background-color: #181818;
+            background-color: rgba(0, 48, 73, 0.8);
             border-radius: 12px;
             padding: 30px;
             margin-top: 30px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 1px solid rgba(247, 127, 0, 0.2);
         }
         .btn-primary {
-            background-color: #1DB954;
-            border-color: #1DB954;
+            background-color: #F77F00;
+            border-color: #F77F00;
             font-weight: 500;
+            color: #003049;
         }
         .btn-primary:hover {
-            background-color: #1ed760;
-            border-color: #1ed760;
+            background-color: #FCBF49;
+            border-color: #FCBF49;
+            color: #003049;
+        }
+        .btn-outline-primary {
+            border-color: #F77F00;
+            color: #F77F00;
+        }
+        .btn-outline-primary:hover {
+            background-color: #F77F00;
+            border-color: #F77F00;
+            color: #003049;
         }
         .form-control,
         .form-select {
-            background-color: #2a2a2a;
-            border: 1px solid #444;
-            color: #fff;
+            background-color: rgba(234, 226, 183, 0.1);
+            border: 1px solid rgba(247, 127, 0, 0.3);
+            color: #EAE2B7;
         }
         .form-control:focus {
-            background-color: #2a2a2a;
-            color: #fff;
-            border-color: #1DB954;
-            box-shadow: 0 0 0 0.2rem rgba(29, 185, 84, 0.25);
+            background-color: rgba(234, 226, 183, 0.15);
+            color: #EAE2B7;
+            border-color: #F77F00;
+            box-shadow: 0 0 0 0.2rem rgba(247, 127, 0, 0.25);
         }
         a {
-            color: #1DB954;
+            color: #FCBF49;
         }
         a:hover {
-            color: #1ed760;
+            color: #F77F00;
+        }
+        .alert-success {
+            background-color: rgba(252, 191, 73, 0.2);
+            border-color: #FCBF49;
+            color: #EAE2B7;
+        }
+        .alert-danger {
+            background-color: rgba(214, 40, 40, 0.2);
+            border-color: #D62828;
+            color: #EAE2B7;
+        }
+        .alert-info {
+            background-color: rgba(247, 127, 0, 0.2);
+            border-color: #F77F00;
+            color: #EAE2B7;
+        }
+        .badge.bg-danger {
+            background-color: #D62828 !important;
         }
     </style>
 </head>

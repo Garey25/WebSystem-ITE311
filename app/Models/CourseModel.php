@@ -61,4 +61,17 @@ class CourseModel extends Model
     {
         return $this->find($id);
     }
+
+    /**
+     * Search courses by title or description
+     *
+     * @param string $searchTerm
+     * @return array
+     */
+    public function searchCourses($searchTerm)
+    {
+        return $this->like('title', $searchTerm)
+                    ->orLike('description', $searchTerm)
+                    ->findAll();
+    }
 }
