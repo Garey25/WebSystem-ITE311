@@ -17,6 +17,8 @@ class UserModel extends Model
         'email',
         'password',
         'role',
+        'status',
+        'is_protected',
         'created_at',
         'updated_at',
     ];
@@ -24,8 +26,10 @@ class UserModel extends Model
     protected $validationRules = [
         'name' => 'required|min_length[2]|max_length[100]',
         'email' => 'required|valid_email|is_unique[users.email,id,{id}]',
-        'password' => 'required|min_length[6]',
-        'role' => 'in_list[student,teacher,admin]',
+        'password' => 'permit_empty|min_length[6]',
+        'role' => 'in_list[student,teacher,admin,librarian]',
+        'status' => 'in_list[active,inactive]',
+        'is_protected' => 'permit_empty|in_list[0,1]',
     ];
 
     protected $validationMessages = [
@@ -53,10 +57,30 @@ class UserModel extends Model
 
     protected function hashPassword(array $data)
     {
-        if (isset($data['data']['password'])) {
+        if (isset($data['data']['password']) && !empty($data['data']['password'])) {
             $data['data']['password'] = password_hash($data['data']['password'], PASSWORD_DEFAULT);
+        } else {
+            // Remove password from update if empty
+            unset($data['data']['password']);
         }
         return $data;
+    }
+    
+    /**
+     * Check if user is protected admin
+     */
+    public function isProtectedAdmin($userId)
+    {
+        $user = $this->find($userId);
+        return $user && isset($user['is_protected']) && $user['is_protected'] == 1;
+    }
+    
+    /**
+     * Get protected admin user
+     */
+    public function getProtectedAdmin()
+    {
+        return $this->where('is_protected', 1)->first();
     }
 }
 

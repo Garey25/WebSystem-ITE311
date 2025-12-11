@@ -127,7 +127,7 @@
                     </li>
                     <li class="nav-item"><a class="nav-link <?= uri_string() == 'dashboard' ? 'active' : '' ?>" href="<?= site_url('dashboard') ?>">Dashboard</a></li>
                     <?php if ($role === 'admin'): ?>
-                        <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link <?= uri_string() == 'admin/users' ? 'active' : '' ?>" href="<?= site_url('admin/users') ?>">Users</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Courses</a></li>
                     <?php elseif ($role === 'teacher'): ?>
                         <li class="nav-item"><a class="nav-link" href="#">My Courses</a></li>

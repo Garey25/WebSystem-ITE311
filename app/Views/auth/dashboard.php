@@ -88,7 +88,7 @@
           <h5 class="mb-0">Admin Actions</h5>
         </div>
         <div class="card-body d-grid gap-2">
-          <a class="btn btn-primary" href="#">Manage Users</a>
+          <a class="btn btn-primary" href="<?= site_url('admin/users') ?>">Manage Users</a>
           <a class="btn btn-outline-secondary" href="#">Manage Courses</a>
           <a class="btn btn-outline-secondary" href="#">System Settings</a>
           <a class="btn btn-outline-secondary" href="#">View Reports</a>

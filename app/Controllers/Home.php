@@ -41,6 +41,18 @@ class Home extends BaseController
 
         $user_id = $session->get('user_id');
         $role = $session->get('role');
+        
+        // Check if user account is still active
+        if ($user_id) {
+            $userModel = new \App\Models\UserModel();
+            $user = $userModel->find($user_id);
+            
+            if ($user && isset($user['status']) && $user['status'] === 'inactive') {
+                // Destroy session and redirect to login
+                $session->destroy();
+                return redirect()->to(base_url('login'))->with('error', 'Your account has been deactivated. Please contact an administrator.');
+            }
+        }
 
         $data = [];
 

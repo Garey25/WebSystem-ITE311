@@ -52,6 +52,12 @@ class Auth extends BaseController
             return redirect()->back()->withInput()->with('login_error', 'User not found.');
         }
         
+        // Check if user account is active
+        if (isset($user['status']) && $user['status'] === 'inactive') {
+            log_message('info', 'Login attempt for inactive user: ' . $email);
+            return redirect()->back()->withInput()->with('login_error', 'Your account has been deactivated. Please contact an administrator.');
+        }
+        
         if (! password_verify($password, $user['password'])) {
             return redirect()->back()->withInput()->with('login_error', 'Invalid password.');
         }
@@ -101,6 +107,18 @@ class Auth extends BaseController
         $role = session('role') ?? 'student';
         $userId = session('user_id');
         $userName = session('name');
+        
+        // Check if user account is still active
+        if ($userId) {
+            $userModel = new UserModel();
+            $user = $userModel->find($userId);
+            
+            if ($user && isset($user['status']) && $user['status'] === 'inactive') {
+                // Destroy session and redirect to login
+                session()->destroy();
+                return redirect()->to(site_url('login'))->with('error', 'Your account has been deactivated. Please contact an administrator.');
+            }
+        }
         
         $data = [
             'title' => 'Dashboard - ' . ucfirst($role),
