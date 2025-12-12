@@ -128,10 +128,9 @@
                     <li class="nav-item"><a class="nav-link <?= uri_string() == 'dashboard' ? 'active' : '' ?>" href="<?= site_url('dashboard') ?>">Dashboard</a></li>
                     <?php if ($role === 'admin'): ?>
                         <li class="nav-item"><a class="nav-link <?= uri_string() == 'admin/users' ? 'active' : '' ?>" href="<?= site_url('admin/users') ?>">Users</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Courses</a></li>
+                        <li class="nav-item"><a class="nav-link <?= uri_string() == 'admin/courses' ? 'active' : '' ?>" href="<?= site_url('admin/courses') ?>">Courses</a></li>
                     <?php elseif ($role === 'teacher'): ?>
-                        <li class="nav-item"><a class="nav-link" href="#">My Courses</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Quizzes</a></li>
+                        <li class="nav-item"><a class="nav-link <?= uri_string() == 'teacher/students' ? 'active' : '' ?>" href="<?= site_url('teacher/students') ?>">Students</a></li>
                     <?php elseif ($role === 'student'): ?>
                         <li class="nav-item"><a class="nav-link" href="#">My Enrollments</a></li>
                     <?php endif; ?>

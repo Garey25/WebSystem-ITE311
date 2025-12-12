@@ -70,6 +70,20 @@ class EnrollmentModel extends Model
     }
 
     /**
+     * Get all students enrolled in a specific course
+     *
+     * @param int $course_id
+     * @return array
+     */
+    public function getCourseEnrollments($course_id)
+    {
+        return $this->select('enrollments.*, users.name as student_name, users.email as student_email, users.id as student_id')
+                    ->join('users', 'users.id = enrollments.user_id')
+                    ->where('enrollments.course_id', $course_id)
+                    ->findAll();
+    }
+
+    /**
      * Check if a user is already enrolled in a specific course
      *
      * @param int $user_id

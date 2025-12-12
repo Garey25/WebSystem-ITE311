@@ -27,7 +27,7 @@ class UserModel extends Model
         'name' => 'required|min_length[2]|max_length[100]',
         'email' => 'required|valid_email|is_unique[users.email,id,{id}]',
         'password' => 'permit_empty|min_length[6]',
-        'role' => 'in_list[student,teacher,admin,librarian]',
+        'role' => 'in_list[student,teacher,admin]',
         'status' => 'in_list[active,inactive]',
         'is_protected' => 'permit_empty|in_list[0,1]',
     ];

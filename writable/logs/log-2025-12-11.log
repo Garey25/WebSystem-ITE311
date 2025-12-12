@@ -30,3 +30,37 @@ Stack trace:
 #10 C:\xampp\htdocs\ITE311-REYES\system\Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
 #11 C:\xampp\htdocs\ITE311-REYES\spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
 #12 {main}
+ERROR - 2025-12-11 23:29:41 --> mysqli_sql_exception: Table 'lms_reyes.users' doesn't exist in C:\xampp\htdocs\ITE311-REYES\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 C:\xampp\htdocs\ITE311-REYES\system\Database\MySQLi\Connection.php(327): mysqli->query('SHOW COLUMNS FR...', 0)
+#1 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SHOW COLUMNS FR...')
+#2 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SHOW COLUMNS FR...')
+#3 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(1606): CodeIgniter\Database\BaseConnection->query('SHOW COLUMNS FR...')
+#4 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(1634): CodeIgniter\Database\BaseConnection->getFieldNames('users')
+#5 C:\xampp\htdocs\ITE311-REYES\app\Database\Migrations\2025-01-15-000000_AddStatusAndProtectedToUsers.php(14): CodeIgniter\Database\BaseConnection->fieldExists('status', 'users')
+#6 C:\xampp\htdocs\ITE311-REYES\system\Database\MigrationRunner.php(876): App\Database\Migrations\AddStatusAndProtectedToUsers->up()
+#7 C:\xampp\htdocs\ITE311-REYES\system\Database\MigrationRunner.php(182): CodeIgniter\Database\MigrationRunner->migrate('up', Object(stdClass))
+#8 C:\xampp\htdocs\ITE311-REYES\system\Commands\Database\Migrate.php(85): CodeIgniter\Database\MigrationRunner->latest(NULL)
+#9 C:\xampp\htdocs\ITE311-REYES\system\CLI\Commands.php(74): CodeIgniter\Commands\Database\Migrate->run(Array)
+#10 C:\xampp\htdocs\ITE311-REYES\system\CLI\Console.php(47): CodeIgniter\CLI\Commands->run('migrate', Array)
+#11 C:\xampp\htdocs\ITE311-REYES\system\Boot.php(388): CodeIgniter\CLI\Console->run()
+#12 C:\xampp\htdocs\ITE311-REYES\system\Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+#13 C:\xampp\htdocs\ITE311-REYES\spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+#14 {main}
+ERROR - 2025-12-11 23:30:33 --> mysqli_sql_exception: Table 'lms_reyes.users' doesn't exist in C:\xampp\htdocs\ITE311-REYES\system\Database\MySQLi\Connection.php:327
+Stack trace:
+#0 C:\xampp\htdocs\ITE311-REYES\system\Database\MySQLi\Connection.php(327): mysqli->query('SHOW COLUMNS FR...', 0)
+#1 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SHOW COLUMNS FR...')
+#2 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SHOW COLUMNS FR...')
+#3 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(1606): CodeIgniter\Database\BaseConnection->query('SHOW COLUMNS FR...')
+#4 C:\xampp\htdocs\ITE311-REYES\system\Database\BaseConnection.php(1634): CodeIgniter\Database\BaseConnection->getFieldNames('users')
+#5 C:\xampp\htdocs\ITE311-REYES\app\Database\Migrations\2025-01-15-000000_AddStatusAndProtectedToUsers.php(14): CodeIgniter\Database\BaseConnection->fieldExists('status', 'users')
+#6 C:\xampp\htdocs\ITE311-REYES\system\Database\MigrationRunner.php(876): App\Database\Migrations\AddStatusAndProtectedToUsers->up()
+#7 C:\xampp\htdocs\ITE311-REYES\system\Database\MigrationRunner.php(182): CodeIgniter\Database\MigrationRunner->migrate('up', Object(stdClass))
+#8 C:\xampp\htdocs\ITE311-REYES\system\Commands\Database\Migrate.php(85): CodeIgniter\Database\MigrationRunner->latest(NULL)
+#9 C:\xampp\htdocs\ITE311-REYES\system\CLI\Commands.php(74): CodeIgniter\Commands\Database\Migrate->run(Array)
+#10 C:\xampp\htdocs\ITE311-REYES\system\CLI\Console.php(47): CodeIgniter\CLI\Commands->run('migrate', Array)
+#11 C:\xampp\htdocs\ITE311-REYES\system\Boot.php(388): CodeIgniter\CLI\Console->run()
+#12 C:\xampp\htdocs\ITE311-REYES\system\Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+#13 C:\xampp\htdocs\ITE311-REYES\spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+#14 {main}

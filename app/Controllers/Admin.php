@@ -4,15 +4,18 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Models\CourseModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class Admin extends BaseController
 {
     protected $userModel;
+    protected $courseModel;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
+        $this->courseModel = new CourseModel();
     }
 
     /**
@@ -27,6 +30,227 @@ class Admin extends BaseController
             }
             redirect()->to(site_url('dashboard'))->with('error', 'Access denied. Admin only.')->send();
             exit;
+        }
+    }
+
+    public function courses()
+    {
+        $this->checkAdmin();
+
+        $search = trim((string) $this->request->getGet('search'));
+
+        $perPage = 10;
+
+        if ($search !== '') {
+            // When searching, return all matching results without pagination
+            $courses = $this->courseModel
+                ->groupStart()
+                    ->like('code', $search)
+                    ->orLike('title', $search)
+                ->groupEnd()
+                ->orderBy('created_at', 'DESC')
+                ->findAll();
+            $pager = null;
+        } else {
+            // Default listing with pagination
+            $courses = $this->courseModel
+                ->orderBy('created_at', 'DESC')
+                ->paginate($perPage);
+            $pager = $this->courseModel->pager;
+        }
+
+        foreach ($courses as &$course) {
+            if (!isset($course['status']) || $course['status'] === '') {
+                $course['status'] = 'inactive';
+            }
+        }
+        unset($course);
+
+        $teachers = $this->userModel
+            ->where('role', 'teacher')
+            ->where('status', 'active')
+            ->orderBy('name', 'ASC')
+            ->findAll();
+
+        // Compute overall course statistics (not just current page)
+        $allCourses = $this->courseModel->findAll();
+        $totalCourses = count($allCourses);
+        $activeCourses = 0;
+        foreach ($allCourses as $c) {
+            if (($c['status'] ?? '') === 'active') {
+                $activeCourses++;
+            }
+        }
+
+        $data = [
+            'title' => 'Manage Courses',
+            'courses' => $courses,
+            'teachers' => $teachers,
+            'totalCourses' => $totalCourses,
+            'activeCourses' => $activeCourses,
+            'search' => $search,
+            'pager' => $pager ?? null,
+        ];
+
+        return view('admin/courses', $data);
+    }
+
+    public function updateCourse()
+    {
+        $this->checkAdmin();
+
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $course = $this->courseModel->find($id);
+        if (!$course) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Course not found']);
+        }
+
+        $startDate = $this->request->getPost('start_date');
+        $endDate = $this->request->getPost('end_date');
+
+        if ($startDate && $endDate) {
+            try {
+                $start = new \DateTime($startDate);
+                $end = new \DateTime($endDate);
+                if ($end < $start) {
+                    return $this->response->setJSON([
+                        'success' => false,
+                        'message' => 'End date cannot be earlier than start date.',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $data = [
+            'code' => $this->request->getPost('code'),
+            'school_year' => $this->request->getPost('school_year'),
+            'semester' => $this->request->getPost('semester'),
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'title' => $this->request->getPost('title'),
+            'description' => $this->request->getPost('description'),
+            'teacher_id' => $this->request->getPost('teacher_id'),
+            'schedule' => $this->request->getPost('schedule'),
+            'status' => $this->request->getPost('status') === 'active' ? 'active' : 'inactive',
+        ];
+
+        if ($this->courseModel->update($id, $data)) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Course updated successfully',
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'message' => 'Failed to update course',
+            'errors' => $this->courseModel->errors(),
+        ]);
+    }
+
+    public function updateCourseStatus()
+    {
+        $this->checkAdmin();
+
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $status = $this->request->getPost('status') === 'active' ? 'active' : 'inactive';
+
+        $course = $this->courseModel->find($id);
+        if (!$course) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Course not found',
+            ]);
+        }
+
+        if ($this->courseModel->update($id, ['status' => $status])) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Course status updated successfully',
+                'new_status' => $status,
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'message' => 'Failed to update course status',
+            'errors' => $this->courseModel->errors(),
+        ]);
+    }
+
+    public function addCourse()
+    {
+        $this->checkAdmin();
+
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $title = trim((string) $this->request->getPost('title'));
+        if ($title === '') {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Course title is required.',
+            ]);
+        }
+
+        $data = [
+            'code' => $this->request->getPost('code') ?: null,
+            'title' => $title,
+            'description' => $this->request->getPost('description') ?: null,
+            'school_year' => $this->request->getPost('school_year') ?: null,
+            'semester' => $this->request->getPost('semester') ?: null,
+            'start_date' => $this->request->getPost('start_date') ?: null,
+            'end_date' => $this->request->getPost('end_date') ?: null,
+            'schedule' => $this->request->getPost('schedule') ?: null,
+            'teacher_id' => $this->request->getPost('teacher_id') ?: null,
+            'status' => $this->request->getPost('status') === 'active' ? 'active' : 'inactive',
+        ];
+
+        // Basic date validation similar to updateCourse
+        if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            try {
+                $start = new \DateTime($data['start_date']);
+                $end = new \DateTime($data['end_date']);
+                if ($end < $start) {
+                    return $this->response->setJSON([
+                        'success' => false,
+                        'message' => 'End date cannot be earlier than start date.',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        try {
+            if ($this->courseModel->insert($data)) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Course added successfully.',
+                ]);
+            }
+
+            $errors = $this->courseModel->errors();
+
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to add course.',
+                'errors' => $errors,
+            ]);
+        } catch (\Throwable $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to add course: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -85,7 +309,7 @@ class Admin extends BaseController
             'name' => 'required|min_length[2]|max_length[100]',
             'email' => 'required|valid_email|is_unique[users.email]',
             'password' => 'required|min_length[8]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/]',
-            'role' => 'required|in_list[student,librarian,admin]',
+            'role' => 'required|in_list[student,teacher,admin]',
         ];
 
         $messages = [
@@ -166,7 +390,7 @@ class Admin extends BaseController
         }
 
         // Validate role
-        if (!in_array($newRole, ['student', 'teacher', 'admin', 'librarian'])) {
+        if (!in_array($newRole, ['student', 'teacher', 'admin'])) {
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON([
                     'success' => false,
@@ -243,6 +467,14 @@ class Admin extends BaseController
                 return $this->response->setJSON([
                     'success' => false,
                     'message' => 'User not found',
+                ]);
+            }
+
+            // Prevent deactivation or activation toggling for admin accounts
+            if (($user['role'] ?? '') === 'admin') {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Admin account is protected and cannot be activated or deactivated.',
                 ]);
             }
 

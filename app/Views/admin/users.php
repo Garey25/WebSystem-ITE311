@@ -62,9 +62,9 @@
                                         <?php else: ?>
                                             <select class="form-select form-select-sm role-select" 
                                                     data-user-id="<?= esc($user['id']) ?>" 
-                                                    style="max-width: 120px;">
+                                                    style="max-width: 140px;">
                                                 <option value="student" <?= $user['role'] === 'student' ? 'selected' : '' ?>>Student</option>
-                                                <option value="librarian" <?= $user['role'] === 'librarian' ? 'selected' : '' ?>>Librarian</option>
+                                                <option value="teacher" <?= $user['role'] === 'teacher' ? 'selected' : '' ?>>Teacher</option>
                                                 <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                                             </select>
                                         <?php endif; ?>
@@ -77,12 +77,9 @@
                                     <td><?= date('M j, Y', strtotime($user['created_at'])) ?></td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <?php if (isset($user['is_protected']) && $user['is_protected'] == 1 && $user['id'] == $protectedAdminId): ?>
-                                                <button type="button" class="btn btn-sm btn-outline-primary change-password-btn" 
-                                                        data-user-id="<?= esc($user['id']) ?>"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#changePasswordModal">
-                                                    <i class="bi bi-key"></i> Change Password
+                                            <?php if ($user['role'] === 'admin'): ?>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled>
+                                                    <i class="bi bi-shield-lock"></i> Protected
                                                 </button>
                                             <?php else: ?>
                                                 <button type="button" class="btn btn-sm <?= (isset($user['status']) && $user['status'] === 'active') ? 'btn-outline-danger' : 'btn-outline-success' ?> toggle-status-btn" 
@@ -140,7 +137,7 @@
                         <select class="form-select" id="addUserRole" name="role" required>
                             <option value="">Select Role</option>
                             <option value="student">Student</option>
-                            <option value="librarian">Librarian</option>
+                            <option value="teacher">Teacher</option>
                             <option value="admin">Admin</option>
                         </select>
                         <div class="invalid-feedback"></div>

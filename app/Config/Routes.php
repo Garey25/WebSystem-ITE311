@@ -50,14 +50,16 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
         $routes->post('users/toggle-status', 'Admin::toggleStatus');
         $routes->post('users/change-password', 'Admin::changePassword');
         $routes->get('courses', 'Admin::courses');
+        $routes->post('courses/add', 'Admin::addCourse');
+        $routes->post('courses/update', 'Admin::updateCourse');
+        $routes->post('courses/update-status', 'Admin::updateCourseStatus');
         $routes->get('settings', 'Admin::settings');
     });
     
     // Teacher routes
     $routes->group('teacher', function($routes) {
-        $routes->get('courses', 'Teacher::courses');
-        $routes->get('quizzes', 'Teacher::quizzes');
-        $routes->get('grades', 'Teacher::grades');
+        $routes->get('students', 'Teacher::students');
+        $routes->post('students/enroll', 'Teacher::enrollStudent');
     });
     
     // Student routes
