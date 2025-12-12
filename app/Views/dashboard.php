@@ -4,13 +4,17 @@
 <?php
     $role = session('role');
     $userEmail = esc(session('userEmail'));
-    $enrolledCount = isset($enrolledCourses) ? count($enrolledCourses) : 0;
+    $approvedCourses = $approvedCourses ?? [];
+    $pendingCourses = $pendingCourses ?? [];
+    $approvedCount = count($approvedCourses);
+    $pendingCount = count($pendingCourses);
+    $enrolledCount = $approvedCount + $pendingCount;
     $availableCount = isset($availableCourses) ? count($availableCourses) : 0;
     $manageableCount = isset($allCourses) ? count($allCourses) : 0;
     $materialsCount = 0;
 
-    if (!empty($enrolledCourses)) {
-        foreach ($enrolledCourses as $enrollment) {
+    if (!empty($approvedCourses)) {
+        foreach ($approvedCourses as $enrollment) {
             $materialsCount += isset($enrollment['materials']) ? count($enrollment['materials']) : 0;
         }
     }
@@ -21,7 +25,7 @@
         <div class="card-body d-lg-flex justify-content-between align-items-center gap-4">
             <div>
                 <p class="text-uppercase text-muted fw-semibold mb-1">Welcome back</p>
-                <h1 class="fw-bold mb-2">Hi, <?= $userEmail ?> 👋</h1>
+                <h1 class="fw-bold mb-2">Hi, <?= $userEmail ?> </h1>
                 <p class="text-muted mb-0">
                     Stay on top of your learning journey with a quick overview of your courses and recent activity.
                 </p>
@@ -39,7 +43,7 @@
         <div class="col-md-4">
             <div class="stat-card p-4">
                 <p class="text-muted text-uppercase small mb-1">Enrolled Courses</p>
-                <h3 class="fw-bold mb-0"><?= $enrolledCount ?></h3>
+                <h3 class="fw-bold mb-0" id="stat-enrolled-count"><?= $enrolledCount ?></h3>
                 <small class="text-muted">Active learning paths</small>
             </div>
         </div>
@@ -48,9 +52,7 @@
                 <p class="text-muted text-uppercase small mb-1">
                     <?= $role === 'admin' || $role === 'teacher' ? 'Courses Managed' : 'Available Courses' ?>
                 </p>
-                <h3 class="fw-bold mb-0">
-                    <?= $role === 'admin' || $role === 'teacher' ? $manageableCount : $availableCount ?>
-                </h3>
+                <h3 class="fw-bold mb-0" id="stat-available-count"><?= $role === 'admin' || $role === 'teacher' ? $manageableCount : $availableCount ?></h3>
                 <small class="text-muted">
                     <?= $role === 'admin' || $role === 'teacher' ? 'Total classes you oversee' : 'Open for enrollment' ?>
                 </small>
@@ -68,31 +70,67 @@
     <div id="alert-container" class="mb-4"></div>
 
     <?php if ($role === 'student'): ?>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" id="enrolledSearchInput" class="form-control"
+                        placeholder="Search your enrolled courses..." 
+                        style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                    <span class="input-group-text" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                        <i class="bi bi-search"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card dashboard-card shadow-sm border-0 mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted text-uppercase small mb-1">Enrollment</p>
+                    <h5 class="mb-0">Pending Courses</h5>
+                </div>
+                <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2" id="pending-count-badge"><?= $pendingCount ?> pending</span>
+            </div>
+            <div class="card-body">
+                <div id="pending-courses">
+                    <?php if (!empty($pendingCourses)): ?>
+                        <?php foreach ($pendingCourses as $enrollment): ?>
+                            <div class="course-block mb-3 dashboard-course-item">
+                                <div class="d-flex justify-content-between flex-wrap">
+                                    <div class="pe-3">
+                                        <h6 class="fw-semibold mb-1"><?= esc($enrollment['course_title']) ?></h6>
+                                        <p class="text-muted mb-2"><?= esc($enrollment['course_description']) ?></p>
+                                        <small class="text-muted">Requested on <?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-warning-subtle text-warning px-3 py-2">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <h6>No pending requests</h6>
+                            <p class="text-muted mb-0">Your enrollment requests will appear here while waiting for approval.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
         <div class="card dashboard-card shadow-sm border-0 mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
                     <p class="text-muted text-uppercase small mb-1">Learning hub</p>
-                    <h5 class="mb-0">My Enrolled Courses</h5>
+                    <h5 class="mb-0">Approved Courses</h5>
                 </div>
-                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2"><?= $enrolledCount ?> active</span>
+                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2" id="approved-count-badge"><?= $approvedCount ?> active</span>
             </div>
             <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <input type="text" id="enrolledSearchInput" class="form-control"
-                                placeholder="Search your enrolled courses..." 
-                                style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
-                            <span class="input-group-text" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
-                                <i class="bi bi-search"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div id="enrolled-courses">
-                <?php if (!empty($enrolledCourses)): ?>
-                    <?php foreach ($enrolledCourses as $enrollment): ?>
-                        <div class="course-block mb-3 enrolled-course-item">
+                <div id="approved-courses">
+                <?php if (!empty($approvedCourses)): ?>
+                    <?php foreach ($approvedCourses as $enrollment): ?>
+                        <div class="course-block mb-3 dashboard-course-item">
                             <div class="d-flex justify-content-between flex-wrap">
                                 <div class="pe-3">
                                     <h6 class="fw-semibold mb-1"><?= esc($enrollment['course_title']) ?></h6>
@@ -100,7 +138,7 @@
                                     <small class="text-muted">Enrolled on <?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></small>
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge bg-success-subtle text-success px-3 py-2">Enrolled</span>
+                                    <span class="badge bg-success-subtle text-success px-3 py-2">Approved</span>
                                 </div>
                             </div>
 
@@ -134,8 +172,8 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div class="empty-state">
-                        <h6>No enrollments yet</h6>
-                        <p class="text-muted mb-0">Browse the available courses below and start learning.</p>
+                        <h6>No approved courses yet</h6>
+                        <p class="text-muted mb-0">Once approved by your teacher, your courses will appear here.</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -170,6 +208,30 @@
             </div>
         </div>
     <?php elseif ($role === 'admin' || $role === 'teacher'): ?>
+        <?php if ($role === 'teacher'): ?>
+            <div class="card dashboard-card shadow-sm border-0 mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted text-uppercase small mb-1">Manage course</p>
+                        <h5 class="mb-0">Enrollment Requests</h5>
+                    </div>
+                    <a class="btn btn-primary" href="<?= site_url('teacher/enrollments') ?>">
+                        View Requests
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="course-row">
+                        <div>
+                            <h6 class="fw-semibold mb-1">Student Enrollment Requests</h6>
+                            <p class="text-muted mb-0">Approve or reject pending enrollments for your courses.</p>
+                        </div>
+                        <a class="btn btn-outline-primary" href="<?= site_url('teacher/enrollments') ?>">
+                            Manage
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         <div class="card dashboard-card shadow-sm border-0">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
@@ -206,7 +268,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.enroll-btn').on('click', function(e) {
+        $(document).on('click', '.enroll-btn', function(e) {
             e.preventDefault();
 
             const button = $(this);
@@ -220,25 +282,76 @@
                 type: 'POST',
                 data: {
                     course_id: courseId,
-                    <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
                 },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
+                dataType: 'text',
+                success: function(rawResponse) {
+                    const response = parseJsonResponse(rawResponse);
+
+                    if (response && response.success) {
                         showAlert('success', response.message);
-                        button.replaceWith('<span class="badge bg-success-subtle text-success px-3 py-2">Enrolled</span>');
-                        addToEnrolledCourses(courseId, courseTitle);
-                    } else {
-                        showAlert('danger', response.message);
-                        button.prop('disabled', false).text('Enroll');
+                        button.closest('.course-row').remove();
+                        addToPendingCourses(courseId, courseTitle);
+                        incrementCountersAfterEnroll();
+                        ensureAvailableEmptyState();
+                        return;
                     }
+
+                    if (response && response.message) {
+                        showAlert('danger', response.message);
+                    } else {
+                        showAlert('danger', 'An error occurred. Please try again.');
+                    }
+                    button.prop('disabled', false).text('Enroll');
                 },
-                error: function() {
-                    showAlert('danger', 'An error occurred. Please try again.');
+                error: function(xhr) {
+                    const response = parseJsonResponse(xhr.responseText);
+
+                    if (response && response.success) {
+                        showAlert('success', response.message);
+                        button.closest('.course-row').remove();
+                        addToPendingCourses(courseId, courseTitle);
+                        incrementCountersAfterEnroll();
+                        ensureAvailableEmptyState();
+                        return;
+                    }
+
+                    if (response && response.message) {
+                        showAlert('danger', response.message);
+                    } else {
+                        showAlert('danger', 'An error occurred. Please try again.');
+                    }
                     button.prop('disabled', false).text('Enroll');
                 }
             });
         });
+
+        function parseJsonResponse(raw) {
+            if (!raw) {
+                return null;
+            }
+
+            if (typeof raw === 'object') {
+                return raw;
+            }
+
+            if (typeof raw !== 'string') {
+                return null;
+            }
+
+            const start = raw.indexOf('{');
+            const end = raw.lastIndexOf('}');
+            if (start === -1 || end === -1 || end <= start) {
+                return null;
+            }
+
+            const candidate = raw.slice(start, end + 1);
+            try {
+                return JSON.parse(candidate);
+            } catch (e) {
+                return null;
+            }
+        }
 
         function showAlert(type, message) {
             const alertHtml = `
@@ -254,14 +367,14 @@
             }, 5000);
         }
 
-        function addToEnrolledCourses(courseId, courseTitle) {
-            const enrolledContainer = $('#enrolled-courses');
-            if (!enrolledContainer.length) {
+        function addToPendingCourses(courseId, courseTitle) {
+            const pendingContainer = $('#pending-courses');
+            if (!pendingContainer.length) {
                 return;
             }
 
-            if (enrolledContainer.find('.empty-state').length) {
-                enrolledContainer.empty();
+            if (pendingContainer.find('.empty-state').length) {
+                pendingContainer.empty();
             }
 
             const currentDate = new Date().toLocaleDateString('en-US', {
@@ -271,27 +384,58 @@
             });
 
             const block = `
-                <div class="course-block mb-3 enrolled-course-item">
+                <div class="course-block mb-3 dashboard-course-item">
                     <div class="d-flex justify-content-between flex-wrap">
                         <div class="pe-3">
                             <h6 class="fw-semibold mb-1">${courseTitle}</h6>
                             <p class="text-muted mb-2">Course description</p>
-                            <small class="text-muted">Enrolled on ${currentDate}</small>
+                            <small class="text-muted">Requested on ${currentDate}</small>
                         </div>
                         <div class="text-end">
-                            <span class="badge bg-success-subtle text-success px-3 py-2">Enrolled</span>
+                            <span class="badge bg-warning-subtle text-warning px-3 py-2">Pending</span>
                         </div>
                     </div>
                 </div>
             `;
 
-            enrolledContainer.prepend(block);
+            pendingContainer.prepend(block);
+        }
+
+        function incrementCountersAfterEnroll() {
+            const pendingBadge = $('#pending-count-badge');
+            const enrolledCount = $('#stat-enrolled-count');
+            const availableCount = $('#stat-available-count');
+
+            const pendingValue = parseInt((pendingBadge.text().match(/\d+/) || ['0'])[0], 10) + 1;
+            pendingBadge.text(pendingValue + ' pending');
+
+            const enrolledValue = parseInt((enrolledCount.text().match(/\d+/) || ['0'])[0], 10) + 1;
+            enrolledCount.text(enrolledValue);
+
+            const availableValueRaw = (availableCount.text().match(/\d+/) || ['0'])[0];
+            const availableValue = Math.max(0, parseInt(availableValueRaw, 10) - 1);
+            availableCount.text(availableValue);
+        }
+
+        function ensureAvailableEmptyState() {
+            const availableContainer = $('#available-courses');
+            if (!availableContainer.length) {
+                return;
+            }
+            if (availableContainer.find('.course-row').length === 0 && availableContainer.find('.empty-state').length === 0) {
+                availableContainer.html(`
+                    <div class="empty-state">
+                        <h6>No open courses right now</h6>
+                        <p class="text-muted mb-0">Please check again later or contact your administrator.</p>
+                    </div>
+                `);
+            }
         }
 
         // Search functionality for enrolled courses (student dashboard)
         $('#enrolledSearchInput').on('keyup', function() {
             const searchTerm = $(this).val().toLowerCase();
-            $('.enrolled-course-item').each(function() {
+            $('.dashboard-course-item').each(function() {
                 const courseText = $(this).text().toLowerCase();
                 $(this).toggle(courseText.indexOf(searchTerm) > -1);
             });

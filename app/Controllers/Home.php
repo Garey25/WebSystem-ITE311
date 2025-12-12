@@ -59,6 +59,12 @@ class Home extends BaseController
         // Load course data for students
         if ($role === 'student') {
             $data['enrolledCourses'] = $this->enrollmentModel->getUserEnrollments($user_id);
+            $data['approvedCourses'] = array_values(array_filter($data['enrolledCourses'], static function ($enrollment) {
+                return ($enrollment['status'] ?? 'approved') === 'approved';
+            }));
+            $data['pendingCourses'] = array_values(array_filter($data['enrolledCourses'], static function ($enrollment) {
+                return ($enrollment['status'] ?? '') === 'pending';
+            }));
             $allCourses = $this->courseModel->getAllCourses();
             
             // Get enrolled course IDs
@@ -71,7 +77,7 @@ class Home extends BaseController
             
             // Fetch materials for each enrolled course
             $materialModel = new MaterialModel();
-            foreach ($data['enrolledCourses'] as &$enrollment) {
+            foreach ($data['approvedCourses'] as &$enrollment) {
                 try {
                     $enrollment['materials'] = $materialModel->getMaterialsByCourse($enrollment['course_id']);
                 } catch (\Exception $e) {

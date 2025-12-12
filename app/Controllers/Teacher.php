@@ -19,6 +19,11 @@ class Teacher extends BaseController
         $this->courseModel = new CourseModel();
         $this->enrollmentModel = new EnrollmentModel();
         $this->userModel = new UserModel();
+        
+        // Ensure user is logged in and is a teacher
+        if (session()->get('role') !== 'teacher') {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException();
+        }
     }
 
     public function index()
@@ -96,14 +101,114 @@ class Teacher extends BaseController
         return view('teacher/students', $data);
     }
 
+    /**
+     * Display pending enrollment requests for teacher's courses
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function enrollments()
+    {
+        $teacherId = session()->get('user_id');
+        log_message('info', 'Teacher::enrollments accessed. teacherId=' . (string) $teacherId . ', role=' . (string) session()->get('role'));
+        $pendingEnrollments = $this->enrollmentModel->getPendingEnrollments($teacherId);
+        log_message('info', 'Teacher::enrollments pendingEnrollments count=' . count($pendingEnrollments));
+        
+        return view('teacher/enrollments', [
+            'title' => 'Enrollment Requests',
+            'enrollments' => $pendingEnrollments
+        ]);
+    }
+    
+    /**
+     * Handle enrollment status update (approve/reject)
+     *
+     * @param int $enrollmentId
+     * @param string $status
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function updateEnrollmentStatus($enrollmentId, $status)
+    {
+        if (!in_array($status, ['approved', 'rejected'])) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Invalid status.'
+            ])->setStatusCode(400);
+        }
+
+        $rejectReason = null;
+        if ($status === 'rejected') {
+            $rejectReason = trim((string) $this->request->getPost('reject_reason'));
+            if ($rejectReason === '') {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Reject reason is required.'
+                ])->setStatusCode(400);
+            }
+        }
+
+        $enrollment = $this->enrollmentModel->find($enrollmentId);
+        if (!$enrollment) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Enrollment not found.'
+            ])->setStatusCode(404);
+        }
+
+        // Verify the teacher owns the course
+        $course = $this->courseModel->getCourseById($enrollment['course_id']);
+        if (!$course) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Course not found.'
+            ])->setStatusCode(404);
+        }
+
+        // If course is unassigned, claim it for the current teacher so requests are actionable
+        if (empty($course['teacher_id'])) {
+            $this->courseModel->update($course['id'], ['teacher_id' => session()->get('user_id')]);
+            $course['teacher_id'] = session()->get('user_id');
+        }
+        if ($course['teacher_id'] != session()->get('user_id')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'You are not authorized to update this enrollment.'
+            ])->setStatusCode(403);
+        }
+
+        // Update the enrollment status
+        if ($this->enrollmentModel->updateStatus($enrollmentId, $status, $rejectReason)) {
+            $statusText = $status === 'approved' ? 'approved' : 'rejected';
+            
+            // Notify the student
+            $notificationModel = new \App\Models\NotificationModel();
+            $notificationModel->insert([
+                'user_id' => $enrollment['user_id'],
+                'message' => $status === 'rejected'
+                    ? ('Your enrollment in ' . $course['title'] . ' has been rejected. Reason: ' . $rejectReason)
+                    : ('Your enrollment in ' . $course['title'] . ' has been ' . $statusText . '.'),
+                'is_read' => 0,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Enrollment ' . $statusText . ' successfully.'
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'message' => 'Failed to update enrollment status.'
+        ]);
+    }
+    
+    /**
+     * Enroll a student in a course (for teachers)
+     */
     public function enrollStudent()
     {
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
-        }
-
-        if (!session()->get('isLoggedIn') || session('role') !== 'teacher') {
-            return $this->response->setJSON(['success' => false, 'message' => 'Access denied.']);
         }
 
         $studentId = (int) $this->request->getPost('student_id');
@@ -142,9 +247,19 @@ class Teacher extends BaseController
         $enrollmentData = [
             'user_id' => $studentId,
             'course_id' => $courseId,
+            'status' => 'approved' // Direct enrollment by teacher is auto-approved
         ];
 
         if ($this->enrollmentModel->enrollUser($enrollmentData)) {
+            // Notify the student
+            $notificationModel = new \App\Models\NotificationModel();
+            $notificationModel->insert([
+                'user_id' => $studentId,
+                'message' => 'You have been enrolled in ' . $course['title'] . ' by your teacher.',
+                'is_read' => 0,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+            
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Student enrolled successfully.',

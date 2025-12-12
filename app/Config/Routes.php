@@ -60,6 +60,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->group('teacher', function($routes) {
         $routes->get('students', 'Teacher::students');
         $routes->post('students/enroll', 'Teacher::enrollStudent');
+        $routes->get('enrollments', 'Teacher::enrollments');
+        $routes->post('enrollments/update/(:num)/(:segment)', 'Teacher::updateEnrollmentStatus/$1/$2');
     });
     
     // Student routes

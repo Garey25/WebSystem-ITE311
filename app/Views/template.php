@@ -194,5 +194,7 @@ $(document).ready(function() {
 });
 </script>
 <?php endif; ?>
+
+<?= $this->renderSection('scripts') ?>
 </body>
 </html>

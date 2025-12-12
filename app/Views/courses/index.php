@@ -17,24 +17,137 @@
 </div>
 
 <div id="coursesContainer" class="row">
-    <?php foreach ($courses as $course): ?>
-        <div class="col-md-4 mb-4 course-item">
+    <?php foreach ($courses as $course): 
+        $isEnrolled = isset($enrollments[$course['id']]) && $enrollments[$course['id']]['status'] === 'approved';
+        $isPending = isset($enrollments[$course['id']]) && $enrollments[$course['id']]['status'] === 'pending';
+    ?>
+        <div class="col-md-4 mb-4 course-item" data-course-id="<?= $course['id'] ?>">
             <div class="card course-card">
                 <div class="card-body">
                     <h5 class="card-title"><?= esc($course['title']) ?></h5>
                     <p class="card-text"><?= esc($course['description'] ?? 'No description available') ?></p>
-                    <a href="<?= site_url('courses/view/' . $course['id']) ?>" class="btn btn-primary">View Course</a>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="<?= site_url('courses/view/' . $course['id']) ?>" class="btn btn-outline-primary btn-sm">View Details</a>
+                        
+                        <div class="enrollment-status" id="enroll-status-<?= $course['id'] ?>">
+                            <?php if ($isEnrolled): ?>
+                                <span class="badge bg-success">Enrolled</span>
+                            <?php elseif ($isPending): ?>
+                                <span class="badge bg-warning">Pending Approval</span>
+                            <?php else: ?>
+                                <button class="btn btn-primary btn-sm enroll-btn" 
+                                        data-course-id="<?= $course['id'] ?>"
+                                        data-course-title="<?= esc($course['title']) ?>">
+                                    Enroll Now
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     <?php endforeach; ?>
 </div>
 
+<!-- Toast Notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="enrollmentToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toast-title">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            <!-- Message will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
-    var baseUrl = "<?= site_url('courses/view/') ?>";
+    // Initialize toasts
+    const toastEl = document.getElementById('enrollmentToast');
+    const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
     
+    // Show toast notification
+    function showToast(title, message, type = 'info') {
+        const toastTitle = $('#toast-title');
+        const toastMessage = $('#toast-message');
+        
+        // Update toast content
+        toastTitle.text(title);
+        toastMessage.html(message);
+        
+        // Update toast style based on type
+        const toast = $('#enrollmentToast');
+        toast.removeClass('bg-success bg-warning bg-danger bg-info');
+        
+        switch(type) {
+            case 'success':
+                toast.addClass('bg-success text-white');
+                break;
+            case 'warning':
+                toast.addClass('bg-warning text-dark');
+                break;
+            case 'error':
+                toast.addClass('bg-danger text-white');
+                break;
+            default:
+                toast.addClass('bg-info text-white');
+        }
+        
+        // Show the toast
+        toast.toast('show');
+    }
+
+    // Handle enroll button click
+    $(document).on('click', '.enroll-btn', function() {
+        const button = $(this);
+        const courseId = button.data('course-id');
+        const courseTitle = button.data('course-title');
+        
+        // Disable button and show loading state
+        button.prop('disabled', true).html(`
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Processing...
+        `);
+        
+        // Send enrollment request
+        $.ajax({
+            url: '<?= site_url('courses/enroll') ?>',
+            method: 'POST',
+            data: {
+                course_id: courseId,
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Update the UI to show pending status
+                    $(`#enroll-status-${courseId}`).html(`
+                        <span class="badge bg-warning">Pending Approval</span>
+                    `);
+                    
+                    showToast('Success', response.message, 'success');
+                } else {
+                    // Re-enable button if there was an error
+                    button.prop('disabled', false).text('Enroll Now');
+                    showToast('Error', response.message, 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Enrollment error:', error);
+                button.prop('disabled', false).text('Enroll Now');
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            }
+        });
+    });
+
     // Client side filtering
     $("#searchInput").on("keyup", function() {
         var searchTerm = $(this).val().toLowerCase();
@@ -59,13 +172,23 @@ $(document).ready(function() {
                 
                 if(response.length > 0) {
                     $.each(response, function(index, course) {
-                        var courseItem = 
-                        `<div class="col-md-4 mb-3">
-                            <div class="card">
+                        // You might want to update this to include the enrollment status
+                        var courseItem = `
+                        <div class="col-md-4 mb-4 course-item" data-course-id="${course.id}">
+                            <div class="card course-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">` + course.name + `</h5>
-                                    <p class="card-text">` + course.description + `</p>
-                                    <a href="` + baseUrl + course.id + `" class="btn btn-primary">View Course</a>
+                                    <h5 class="card-title">${course.name}</h5>
+                                    <p class="card-text">${course.description || 'No description available'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="<?= site_url('courses/view/') ?>${course.id}" class="btn btn-outline-primary btn-sm">View Details</a>
+                                        <div class="enrollment-status" id="enroll-status-${course.id}">
+                                            <button class="btn btn-primary btn-sm enroll-btn" 
+                                                    data-course-id="${course.id}"
+                                                    data-course-title="${course.name}">
+                                                Enroll Now
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>`;

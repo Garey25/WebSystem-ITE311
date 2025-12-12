@@ -171,6 +171,7 @@
         </div>
         <div class="card-body d-grid gap-2">
           <a class="btn btn-primary" href="#">Create New Course</a>
+          <a class="btn btn-outline-primary" href="<?= site_url('teacher/enrollments') ?>">Manage Course (Requests)</a>
           <a class="btn btn-outline-secondary" href="#">Create Quiz</a>
           <a class="btn btn-outline-secondary" href="#">Grade Submissions</a>
           <a class="btn btn-outline-secondary" href="#">View Analytics</a>

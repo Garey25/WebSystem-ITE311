@@ -12,7 +12,7 @@ class EnrollmentModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['user_id', 'course_id', 'enrolled_at'];
+    protected $allowedFields = ['user_id', 'course_id', 'enrolled_at', 'status', 'processed_at', 'reject_reason'];
 
     // Dates
     protected $useTimestamps = false;
@@ -24,7 +24,8 @@ class EnrollmentModel extends Model
     // Validation
     protected $validationRules = [
         'user_id' => 'required|integer',
-        'course_id' => 'required|integer'
+        'course_id' => 'required|integer',
+        'status' => 'permit_empty|in_list[pending,approved,rejected]'
     ];
     protected $validationMessages = [];
     protected $skipValidation = false;
@@ -49,10 +50,59 @@ class EnrollmentModel extends Model
      */
     public function enrollUser($data)
     {
-        // Set the enrollment date to current timestamp
+        // Set the enrollment date to current timestamp and default status to pending
         $data['enrolled_at'] = date('Y-m-d H:i:s');
+        $data['status'] = $data['status'] ?? 'pending';
         
         return $this->insert($data);
+    }
+    
+    /**
+     * Update enrollment status
+     *
+     * @param int $enrollmentId
+     * @param string $status
+     * @param string|null $rejectReason
+     * @return bool
+     */
+    public function updateStatus($enrollmentId, $status, $rejectReason = null)
+    {
+        $payload = [
+            'status' => $status,
+            'processed_at' => date('Y-m-d H:i:s')
+        ];
+
+        if ($status === 'rejected') {
+            $payload['reject_reason'] = $rejectReason;
+        } else {
+            $payload['reject_reason'] = null;
+        }
+
+        return $this->update($enrollmentId, [
+            'status' => $payload['status'],
+            'processed_at' => $payload['processed_at'],
+            'reject_reason' => $payload['reject_reason'],
+        ]);
+    }
+    
+    /**
+     * Get pending enrollments for teacher's courses
+     *
+     * @param int $teacherId
+     * @return array
+     */
+    public function getPendingEnrollments($teacherId)
+    {
+        return $this->select('enrollments.*, users.name as student_name, users.email as student_email, courses.title as course_title')
+                   ->join('users', 'users.id = enrollments.user_id')
+                   ->join('courses', 'courses.id = enrollments.course_id')
+                   ->groupStart()
+                       ->where('courses.teacher_id', $teacherId)
+                       ->orWhere('courses.teacher_id', null)
+                   ->groupEnd()
+                   ->where('enrollments.status', 'pending')
+                   ->orderBy('enrollments.enrolled_at', 'ASC')
+                   ->findAll();
     }
 
     /**
@@ -90,10 +140,36 @@ class EnrollmentModel extends Model
      * @param int $course_id
      * @return bool
      */
+    /**
+     * Check if a user is already enrolled in a course
+     * Only returns true if the enrollment is approved
+     *
+     * @param int $user_id
+     * @param int $course_id
+     * @return bool
+     */
     public function isAlreadyEnrolled($user_id, $course_id)
     {
         $enrollment = $this->where('user_id', $user_id)
                           ->where('course_id', $course_id)
+                          ->where('status', 'approved')
+                          ->first();
+        
+        return $enrollment !== null;
+    }
+    
+    /**
+     * Check if a user has a pending enrollment request for a course
+     *
+     * @param int $user_id
+     * @param int $course_id
+     * @return bool
+     */
+    public function hasPendingEnrollment($user_id, $course_id)
+    {
+        $enrollment = $this->where('user_id', $user_id)
+                          ->where('course_id', $course_id)
+                          ->where('status', 'pending')
                           ->first();
         
         return $enrollment !== null;
