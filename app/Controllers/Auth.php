@@ -240,7 +240,7 @@ class Auth extends BaseController
     public function store()
     {
         $rules = [
-            'name' => 'required|min_length[2]|max_length[100]',
+            'name' => 'required|min_length[2]|max_length[100]|regex_match[/^[\p{L} ]+$/u]',
             'email' => 'required|valid_email|is_unique[users.email]',
             'password' => 'required|min_length[6]',
             'password_confirm' => 'required|matches[password]',

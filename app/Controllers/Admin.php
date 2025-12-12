@@ -390,13 +390,16 @@ class Admin extends BaseController
         }
 
         $rules = [
-            'name' => 'required|min_length[2]|max_length[100]',
+            'name' => 'required|min_length[2]|max_length[100]|regex_match[/^[\p{L} ]+$/u]',
             'email' => 'required|valid_email|is_unique[users.email]',
             'password' => 'required|min_length[8]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/]',
             'role' => 'required|in_list[student,teacher,admin]',
         ];
 
         $messages = [
+            'name' => [
+                'regex_match' => 'Name may only contain letters and spaces.',
+            ],
             'password' => [
                 'min_length' => 'Password must be at least 8 characters long',
                 'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
