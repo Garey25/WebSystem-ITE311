@@ -521,6 +521,82 @@ class Admin extends BaseController
         }
     }
 
+    public function updateUser()
+    {
+        $this->checkAdmin();
+
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $userId = $this->request->getPost('user_id');
+        if (!$userId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'User ID is required',
+            ]);
+        }
+
+        $user = $this->userModel->find($userId);
+        if (!$user) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'User not found',
+            ]);
+        }
+
+        if ($this->isProtectedAdmin($userId)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Cannot edit protected admin account',
+            ]);
+        }
+
+        $rules = [
+            'name' => 'required|min_length[2]|max_length[100]|regex_match[/^[\p{L} ]+$/u]',
+            'email' => 'required|valid_email|is_unique[users.email,id,' . $userId . ']',
+        ];
+
+        $messages = [
+            'name' => [
+                'regex_match' => 'Name may only contain letters and spaces.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $this->validator->getErrors(),
+            ]);
+        }
+
+        $data = [
+            'name' => esc($this->request->getPost('name')),
+            'email' => esc($this->request->getPost('email')),
+        ];
+
+        try {
+            if ($this->userModel->update($userId, $data)) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'User updated successfully',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to update user',
+                'errors' => $this->userModel->errors(),
+            ]);
+        } catch (\Throwable $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
     /**
      * Toggle user status (activate/deactivate)
      */

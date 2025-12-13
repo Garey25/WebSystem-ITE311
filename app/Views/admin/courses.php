@@ -21,10 +21,12 @@
                         <div class="col-md-4">
                             <label for="addCourseCode" class="form-label">Course Code</label>
                             <input type="text" class="form-control" id="addCourseCode" name="code" placeholder="e.g., CS101">
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-8">
                             <label for="addCourseTitle" class="form-label">Course Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="addCourseTitle" name="title" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-12">
                             <label for="addCourseDescription" class="form-label">Description</label>
@@ -33,6 +35,7 @@
                         <div class="col-md-4">
                             <label for="addSchoolYear" class="form-label">School Year</label>
                             <input type="text" class="form-control" id="addSchoolYear" name="school_year" placeholder="e.g., 2024-2025">
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-4">
                             <label for="addSemester" class="form-label">Semester</label>
@@ -42,6 +45,7 @@
                                 <option value="2nd">2nd Semester</option>
                                 <option value="summer">Summer</option>
                             </select>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-4">
                             <label for="addStatus" class="form-label">Status</label>
@@ -49,6 +53,7 @@
                                 <option value="active">Active</option>
                                 <option value="inactive" selected>Inactive</option>
                             </select>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="addStartDate" class="form-label">Start Date</label>
@@ -253,6 +258,7 @@
                         <div class="col-md-4">
                             <label for="editSchoolYear" class="form-label">School Year</label>
                             <input type="text" class="form-control" id="editSchoolYear" name="school_year" placeholder="e.g., 2024-2025">
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-4">
                             <label for="editSemester" class="form-label">Semester</label>
@@ -262,6 +268,7 @@
                                 <option value="2nd">2nd Semester</option>
                                 <option value="summer">Summer</option>
                             </select>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="editStartDate" class="form-label">Start Date</label>
@@ -274,6 +281,7 @@
                         <div class="col-md-12">
                             <label for="editCourseTitle" class="form-label">Course Title</label>
                             <input type="text" class="form-control" id="editCourseTitle" name="title">
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-12">
                             <label for="editCourseDescription" class="form-label">Description</label>
@@ -314,6 +322,7 @@
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
+                            <div class="invalid-feedback"></div>
                         </div>
                     </div>
                 </div>
@@ -351,6 +360,8 @@ $(document).ready(function() {
         $('#editSchedule').val(row.data('course-schedule'));
         $('#editStatus').val(row.data('course-status'));
         $('#editTeacher').val(row.data('course-teacher-id'));
+        $('#editCourseForm').find('.is-invalid').removeClass('is-invalid');
+        $('#editCourseForm').find('.invalid-feedback').text('');
         $('#editCourseAlert').empty().removeClass('alert alert-success alert-danger').hide();
     });
 
@@ -362,6 +373,8 @@ $(document).ready(function() {
         const submitBtn = form.find('button[type="submit"]');
 
         alertDiv.empty().removeClass('alert alert-success alert-danger').hide();
+        form.find('.is-invalid').removeClass('is-invalid');
+        form.find('.invalid-feedback').text('');
 
         const startDate = $('#editStartDate').val();
         const endDate = $('#editEndDate').val();
@@ -393,6 +406,14 @@ $(document).ready(function() {
                     const message = response.message || 'Failed to update course.';
                     alertDiv.addClass('alert alert-danger').html('<i class="bi bi-exclamation-triangle"></i> ' + message).show();
                     showCourseNotification('danger', message);
+                    if (response.errors) {
+                        $.each(response.errors, function(field, errorMessage) {
+                            const input = form.find('[name="' + field + '"]');
+                            if (!input.length) return;
+                            input.addClass('is-invalid');
+                            input.siblings('.invalid-feedback').text(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
+                        });
+                    }
                 }
             },
             error: function() {
@@ -463,6 +484,8 @@ $(document).ready(function() {
         const submitBtn = form.find('button[type="submit"]');
 
         alertDiv.empty().removeClass('alert alert-success alert-danger').hide();
+        form.find('.is-invalid').removeClass('is-invalid');
+        form.find('.invalid-feedback').text('');
 
         const startDate = $('#addStartDate').val();
         const endDate = $('#addEndDate').val();
@@ -494,6 +517,14 @@ $(document).ready(function() {
                     const message = response.message || 'Failed to add course.';
                     alertDiv.addClass('alert alert-danger').html('<i class="bi bi-exclamation-triangle"></i> ' + message).show();
                     showCourseNotification('danger', message);
+                    if (response.errors) {
+                        $.each(response.errors, function(field, errorMessage) {
+                            const input = form.find('[name="' + field + '"]');
+                            if (!input.length) return;
+                            input.addClass('is-invalid');
+                            input.siblings('.invalid-feedback').text(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
+                        });
+                    }
                 }
             },
             error: function() {
@@ -566,6 +597,21 @@ $(document).ready(function() {
     border: 1px solid rgba(247, 127, 0, 0.3);
     color: #EAE2B7;
 }
+
+ .course-status-select.form-select {
+     background-color: rgba(234, 226, 183, 0.18);
+     border: 2px solid rgba(247, 127, 0, 0.9);
+     color: #EAE2B7;
+     font-weight: 700;
+     min-width: 120px;
+     padding-top: 0.35rem;
+     padding-bottom: 0.35rem;
+ }
+
+ .course-status-select.form-select:focus {
+     border-color: #FCBF49;
+     box-shadow: 0 0 0 0.2rem rgba(252, 191, 73, 0.35);
+ }
 
 .form-select:focus, .form-control:focus {
     background-color: rgba(234, 226, 183, 0.15);

@@ -77,11 +77,19 @@
                                     <td><?= date('M j, Y', strtotime($user['created_at'])) ?></td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <?php if ($user['role'] === 'admin'): ?>
+                                            <?php if (isset($user['is_protected']) && (int) $user['is_protected'] === 1): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-secondary" disabled>
                                                     <i class="bi bi-shield-lock"></i> Protected
                                                 </button>
                                             <?php else: ?>
+                                                <button type="button" class="btn btn-sm btn-outline-primary edit-user-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editUserModal"
+                                                        data-user-id="<?= esc($user['id']) ?>"
+                                                        data-user-name="<?= esc($user['name']) ?>"
+                                                        data-user-email="<?= esc($user['email']) ?>">
+                                                    <i class="bi bi-pencil-square"></i> Edit
+                                                </button>
                                                 <button type="button" class="btn btn-sm <?= (isset($user['status']) && $user['status'] === 'active') ? 'btn-outline-danger' : 'btn-outline-success' ?> toggle-status-btn" 
                                                         data-user-id="<?= esc($user['id']) ?>"
                                                         data-current-status="<?= isset($user['status']) ? esc($user['status']) : 'active' ?>">
@@ -146,6 +154,37 @@
                 <div class="modal-footer" style="border-top: 1px solid rgba(247, 127, 0, 0.2);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: rgba(0, 48, 73, 0.95); border: 1px solid rgba(247, 127, 0, 0.3); color: #EAE2B7;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(247, 127, 0, 0.2);">
+                <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId" name="user_id">
+                <div class="modal-body">
+                    <div id="editUserAlert"></div>
+                    <div class="mb-3">
+                        <label for="editUserName" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="editUserName" name="name" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserEmail" class="form-label">Email/Username</label>
+                        <input type="email" class="form-control" id="editUserEmail" name="email" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(247, 127, 0, 0.2);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -242,6 +281,66 @@ $(document).ready(function() {
             },
             complete: function() {
                 submitBtn.prop('disabled', false).text('Add User');
+            }
+        });
+    });
+
+    $('#editUserModal').on('show.bs.modal', function(event) {
+        const button = $(event.relatedTarget);
+        const userId = button.data('user-id');
+        const userName = button.data('user-name');
+        const userEmail = button.data('user-email');
+
+        $('#editUserId').val(userId);
+        $('#editUserName').val(userName);
+        $('#editUserEmail').val(userEmail);
+
+        const form = $('#editUserForm');
+        form.find('.is-invalid').removeClass('is-invalid');
+        form.find('.invalid-feedback').text('');
+        $('#editUserAlert').empty().removeClass('alert alert-success alert-danger').hide();
+    });
+
+    $('#editUserForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const alertDiv = $('#editUserAlert');
+        const submitBtn = form.find('button[type="submit"]');
+
+        alertDiv.empty().removeClass('alert alert-success alert-danger').hide();
+        form.find('.is-invalid').removeClass('is-invalid');
+        form.find('.invalid-feedback').text('');
+
+        submitBtn.prop('disabled', true).text('Saving...');
+
+        $.ajax({
+            url: '<?= site_url('admin/users/update') ?>',
+            method: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    showNotification('success', response.message || 'User updated successfully');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1200);
+                } else {
+                    alertDiv.addClass('alert alert-danger').html('<i class="bi bi-exclamation-triangle"></i> ' + (response.message || 'Failed to update user')).show();
+                    if (response.errors) {
+                        $.each(response.errors, function(field, message) {
+                            const input = form.find('[name="' + field + '"]');
+                            input.addClass('is-invalid');
+                            input.siblings('.invalid-feedback').text(Array.isArray(message) ? message[0] : message);
+                        });
+                    }
+                }
+            },
+            error: function() {
+                alertDiv.addClass('alert alert-danger').html('<i class="bi bi-exclamation-triangle"></i> An error occurred. Please try again.').show();
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).text('Save Changes');
             }
         });
     });

@@ -34,10 +34,31 @@ class CourseModel extends Model
 
     // Validation
     protected $validationRules = [
-        'title' => 'required|min_length[3]|max_length[200]',
-        'description' => 'permit_empty'
+        'code' => 'permit_empty|max_length[20]|regex_match[/^[A-Za-z0-9]+$/]',
+        'title' => 'required|min_length[3]|max_length[200]|regex_match[/^[\p{L}\d ]+$/u]',
+        'description' => 'permit_empty',
+        'school_year' => 'permit_empty|regex_match[/^\d{4}-\d{4}$/]',
+        'semester' => 'permit_empty|in_list[1st,2nd,summer]',
+        'status' => 'permit_empty|in_list[active,inactive]'
     ];
-    protected $validationMessages = [];
+    protected $validationMessages = [
+        'code' => [
+            'regex_match' => 'Course code may only contain letters and numbers.',
+            'max_length' => 'Course code cannot exceed 20 characters.',
+        ],
+        'title' => [
+            'regex_match' => 'Course title may only contain letters, numbers, and spaces.',
+        ],
+        'school_year' => [
+            'regex_match' => 'School year must be in the format YYYY-YYYY (e.g., 2024-2025).',
+        ],
+        'semester' => [
+            'in_list' => 'Semester must be 1st, 2nd, or summer.',
+        ],
+        'status' => [
+            'in_list' => 'Status must be active or inactive.',
+        ],
+    ];
     protected $skipValidation = false;
     protected $cleanValidationRules = true;
 

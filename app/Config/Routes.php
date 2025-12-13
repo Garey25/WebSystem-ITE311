@@ -47,6 +47,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->group('admin', function($routes) {
         $routes->get('users', 'Admin::users');
         $routes->post('users/add', 'Admin::addUser');
+        $routes->post('users/update', 'Admin::updateUser');
         $routes->post('users/update-role', 'Admin::updateRole');
         $routes->post('users/toggle-status', 'Admin::toggleStatus');
         $routes->post('users/change-password', 'Admin::changePassword');
