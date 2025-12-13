@@ -9,6 +9,16 @@
 
 <h1 class="h3 mb-4">Dashboard - <?= ucfirst($role) ?> Panel</h1>
 
+<div class="row mb-4">
+  <div class="col-lg-6">
+    <div class="input-group">
+      <input type="text" id="dashboardGlobalSearch" class="form-control" placeholder="Search in your dashboard...">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+    <small class="text-muted">Search courses, students, enrollments, and materials shown on this dashboard.</small>
+  </div>
+</div>
+
 <?php if ($role === 'admin'): ?>
   <!-- Admin Dashboard -->
   <div class="row g-4 mb-4">
@@ -66,7 +76,7 @@
                 </thead>
                 <tbody>
                   <?php foreach ($recent_users as $user): ?>
-                    <tr>
+                    <tr class="dashboard-search-target">
                       <td><?= esc($user['name']) ?></td>
                       <td><?= esc($user['email']) ?></td>
                       <td><span class="badge bg-primary"><?= esc($user['role']) ?></span></td>
@@ -144,7 +154,7 @@
           <?php if (!empty($my_courses_list)): ?>
             <div class="list-group list-group-flush">
               <?php foreach ($my_courses_list as $course): ?>
-                <div class="list-group-item bg-transparent border-secondary">
+                <div class="list-group-item bg-transparent border-secondary dashboard-search-target">
                   <div class="d-flex justify-content-between align-items-start">
                     <div>
                       <h6 class="mb-1"><?= esc($course['title']) ?></h6>
@@ -219,7 +229,7 @@
           <?php if (!empty($my_enrollments)): ?>
             <div class="list-group list-group-flush">
               <?php foreach ($my_enrollments as $enrollment): ?>
-                <div class="list-group-item bg-transparent border-secondary mb-3">
+                <div class="list-group-item bg-transparent border-secondary mb-3 dashboard-search-target">
                   <div class="d-flex justify-content-between align-items-start mb-2">
                     <div class="flex-grow-1">
                       <h6 class="mb-1"><?= esc($enrollment['course_title']) ?></h6>
@@ -236,7 +246,7 @@
                       </h6>
                       <div class="list-group list-group-flush">
                         <?php foreach ($enrollment['materials'] as $material): ?>
-                          <div class="list-group-item bg-transparent border-secondary px-0 py-2">
+                          <div class="list-group-item bg-transparent border-secondary px-0 py-2 dashboard-search-target">
                             <div class="d-flex justify-content-between align-items-center">
                               <div>
                                 <i class="bi bi-file-earmark-text me-2"></i>
@@ -277,13 +287,33 @@
         </div>
         <div class="card-body d-grid gap-2">
           <a class="btn btn-primary" href="#">Browse Courses</a>
-          <a class="btn btn-outline-secondary" href="#">View Grades</a>
-          <a class="btn btn-outline-secondary" href="#">Upcoming Deadlines</a>
-          <a class="btn btn-outline-secondary" href="#">My Progress</a>
+          <a class="btn btn-outline-secondary" href="<?= site_url('student/enrollments') ?>">My Enrollments</a>
+          <a class="btn btn-outline-secondary" href="<?= site_url('student/grades') ?>">View Grades</a>
+          <a class="btn btn-outline-secondary" href="<?= site_url('student/progress') ?>">My Progress</a>
         </div>
       </div>
     </div>
   </div>
 <?php endif; ?>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+  $(document).ready(function() {
+    $('#dashboardGlobalSearch').on('keyup', function() {
+      const term = ($(this).val() || '').toLowerCase().trim();
+
+      if (!term) {
+        $('.dashboard-search-target').show();
+        return;
+      }
+
+      $('.dashboard-search-target').each(function() {
+        const text = $(this).text().toLowerCase();
+        $(this).toggle(text.indexOf(term) > -1);
+      });
+    });
+  });
+</script>
 <?= $this->endSection() ?>

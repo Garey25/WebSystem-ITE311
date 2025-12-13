@@ -64,5 +64,37 @@ class Notifications extends BaseController
             ]);
         }
     }
+
+    public function delete($id)
+    {
+        if (!session()->get('isLoggedIn')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Not logged in'
+            ]);
+        }
+
+        $userId = session()->get('user_id');
+        $notification = $this->notificationModel->find($id);
+
+        if (!$notification || $notification['user_id'] != $userId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Notification not found'
+            ])->setStatusCode(404);
+        }
+
+        if ($this->notificationModel->delete($id)) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Notification deleted'
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'message' => 'Failed to delete notification'
+        ])->setStatusCode(500);
+    }
 }
 

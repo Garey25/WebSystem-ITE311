@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\CourseModel;
 use App\Models\EnrollmentModel;
+use App\Models\MaterialModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -12,12 +13,14 @@ class Teacher extends BaseController
 {
     protected $courseModel;
     protected $enrollmentModel;
+    protected $materialModel;
     protected $userModel;
 
     public function __construct()
     {
         $this->courseModel = new CourseModel();
         $this->enrollmentModel = new EnrollmentModel();
+        $this->materialModel = new MaterialModel();
         $this->userModel = new UserModel();
         
         // Ensure user is logged in and is a teacher
@@ -118,6 +121,84 @@ class Teacher extends BaseController
             'enrollments' => $pendingEnrollments
         ]);
     }
+
+    public function search()
+    {
+        $teacherId = (int) session()->get('user_id');
+        $q = trim((string) $this->request->getGet('q'));
+
+        $limit = 25;
+
+        $courses = [];
+        $enrollments = [];
+        $materials = [];
+
+        $db = \Config\Database::connect();
+
+        // Teacher-owned courses are the boundary for what we search.
+        $teacherCourseIds = $db->table('courses')
+            ->select('id')
+            ->where('teacher_id', $teacherId)
+            ->get()
+            ->getResultArray();
+        $teacherCourseIds = array_values(array_filter(array_map(static function ($row) {
+            return (int) ($row['id'] ?? 0);
+        }, $teacherCourseIds)));
+
+        if ($q !== '' && !empty($teacherCourseIds)) {
+            $courses = $db->table('courses c')
+                ->select('c.*')
+                ->where('c.teacher_id', $teacherId)
+                ->groupStart()
+                    ->like('c.code', $q)
+                    ->orLike('c.title', $q)
+                    ->orLike('c.description', $q)
+                ->groupEnd()
+                ->orderBy('c.created_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResultArray();
+
+            $enrollments = $db->table('enrollments e')
+                ->select('e.*, u.name as student_name, u.email as student_email, c.title as course_title, c.code as course_code')
+                ->join('users u', 'u.id = e.user_id')
+                ->join('courses c', 'c.id = e.course_id')
+                ->whereIn('e.course_id', $teacherCourseIds)
+                ->groupStart()
+                    ->like('u.name', $q)
+                    ->orLike('u.email', $q)
+                    ->orLike('c.title', $q)
+                    ->orLike('c.code', $q)
+                    ->orLike('e.status', $q)
+                ->groupEnd()
+                ->orderBy('e.enrolled_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResultArray();
+
+            $materials = $db->table('materials m')
+                ->select('m.*, c.title as course_title, c.code as course_code')
+                ->join('courses c', 'c.id = m.course_id')
+                ->whereIn('m.course_id', $teacherCourseIds)
+                ->groupStart()
+                    ->like('m.file_name', $q)
+                    ->orLike('c.title', $q)
+                    ->orLike('c.code', $q)
+                ->groupEnd()
+                ->orderBy('m.created_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResultArray();
+        }
+
+        return view('teacher/search', [
+            'title' => 'Teacher Search',
+            'q' => $q,
+            'courses' => $courses,
+            'enrollments' => $enrollments,
+            'materials' => $materials,
+        ]);
+    }
     
     /**
      * Handle enrollment status update (approve/reject)
@@ -163,11 +244,6 @@ class Teacher extends BaseController
             ])->setStatusCode(404);
         }
 
-        // If course is unassigned, claim it for the current teacher so requests are actionable
-        if (empty($course['teacher_id'])) {
-            $this->courseModel->update($course['id'], ['teacher_id' => session()->get('user_id')]);
-            $course['teacher_id'] = session()->get('user_id');
-        }
         if ($course['teacher_id'] != session()->get('user_id')) {
             return $this->response->setJSON([
                 'success' => false,

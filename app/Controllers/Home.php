@@ -67,12 +67,14 @@ class Home extends BaseController
             }));
             $allCourses = $this->courseModel->getAllCourses();
             
-            // Get enrolled course IDs
-            $enrolledCourseIds = array_column($data['enrolledCourses'], 'course_id');
+            // Exclude only pending/approved enrollments from available courses
+            // (Rejected courses should re-appear so students can re-enroll.)
+            $blockedCourseIds = array_column(array_filter($data['enrolledCourses'], static function ($enrollment) {
+                return in_array(($enrollment['status'] ?? 'approved'), ['pending', 'approved'], true);
+            }), 'course_id');
             
-            // Filter out already enrolled courses
-            $data['availableCourses'] = array_filter($allCourses, function($course) use ($enrolledCourseIds) {
-                return !in_array($course['id'], $enrolledCourseIds);
+            $data['availableCourses'] = array_filter($allCourses, function($course) use ($blockedCourseIds) {
+                return !in_array($course['id'], $blockedCourseIds);
             });
             
             // Fetch materials for each enrolled course

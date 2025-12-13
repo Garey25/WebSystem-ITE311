@@ -67,22 +67,23 @@
         </div>
     </div>
 
+    <div class="row mb-3">
+        <div class="col-lg-6">
+            <div class="input-group">
+                <input type="text" id="dashboardGlobalSearch" class="form-control"
+                    placeholder="Search in your dashboard..."
+                    style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                <span class="input-group-text" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                    <i class="bi bi-search"></i>
+                </span>
+            </div>
+            <small class="text-muted">Tip: search courses, materials, and items shown on your dashboard.</small>
+        </div>
+    </div>
+
     <div id="alert-container" class="mb-4"></div>
 
     <?php if ($role === 'student'): ?>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" id="enrolledSearchInput" class="form-control"
-                        placeholder="Search your enrolled courses..." 
-                        style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
-                    <span class="input-group-text" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
-                        <i class="bi bi-search"></i>
-                    </span>
-                </div>
-            </div>
-        </div>
-
         <div class="card dashboard-card shadow-sm border-0 mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
@@ -95,7 +96,7 @@
                 <div id="pending-courses">
                     <?php if (!empty($pendingCourses)): ?>
                         <?php foreach ($pendingCourses as $enrollment): ?>
-                            <div class="course-block mb-3 dashboard-course-item">
+                            <div class="course-block mb-3 dashboard-course-item dashboard-search-target">
                                 <div class="d-flex justify-content-between flex-wrap">
                                     <div class="pe-3">
                                         <h6 class="fw-semibold mb-1"><?= esc($enrollment['course_title']) ?></h6>
@@ -130,7 +131,7 @@
                 <div id="approved-courses">
                 <?php if (!empty($approvedCourses)): ?>
                     <?php foreach ($approvedCourses as $enrollment): ?>
-                        <div class="course-block mb-3 dashboard-course-item">
+                        <div class="course-block mb-3 dashboard-course-item dashboard-search-target">
                             <div class="d-flex justify-content-between flex-wrap">
                                 <div class="pe-3">
                                     <h6 class="fw-semibold mb-1"><?= esc($enrollment['course_title']) ?></h6>
@@ -148,7 +149,7 @@
                                     <div class="row g-2">
                                         <?php foreach ($enrollment['materials'] as $material): ?>
                                             <div class="col-md-6">
-                                                <div class="material-tile">
+                                                <div class="material-tile dashboard-search-target">
                                                     <div>
                                                         <p class="mb-1 fw-semibold"><?= esc($material['file_name']) ?></p>
                                                         <small class="text-muted"><?= date('M j, Y', strtotime($material['created_at'])) ?></small>
@@ -187,7 +188,7 @@
             <div class="card-body" id="available-courses">
                 <?php if (!empty($availableCourses)): ?>
                     <?php foreach ($availableCourses as $course): ?>
-                        <div class="course-row">
+                        <div class="course-row dashboard-search-target">
                             <div>
                                 <h6 class="fw-semibold mb-1"><?= esc($course['title']) ?></h6>
                                 <p class="text-muted mb-0"><?= esc($course['description']) ?></p>
@@ -220,7 +221,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <div class="course-row">
+                    <div class="course-row dashboard-search-target">
                         <div>
                             <h6 class="fw-semibold mb-1">Student Enrollment Requests</h6>
                             <p class="text-muted mb-0">Approve or reject pending enrollments for your courses.</p>
@@ -243,15 +244,22 @@
             <div class="card-body">
                 <?php if (!empty($allCourses)): ?>
                     <?php foreach ($allCourses as $course): ?>
-                        <div class="course-row">
+                        <div class="course-row dashboard-search-target">
                             <div>
                                 <h6 class="fw-semibold mb-1"><?= esc($course['title']) ?></h6>
                                 <p class="text-muted mb-0"><?= esc($course['description']) ?></p>
                             </div>
-                            <a class="btn btn-primary"
-                               href="<?= site_url('admin/course/' . $course['id'] . '/upload') ?>">
-                                Upload Materials
-                            </a>
+                            <div class="d-flex gap-2">
+                                <?php if ($role === 'teacher'): ?>
+                                    <a class="btn btn-outline-primary" href="<?= site_url('teacher/students?course_id=' . $course['id']) ?>">
+                                        View Students
+                                    </a>
+                                <?php endif; ?>
+                                <a class="btn btn-primary"
+                                   href="<?= site_url('admin/course/' . $course['id'] . '/upload') ?>">
+                                    Upload Materials
+                                </a>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -384,7 +392,7 @@
             });
 
             const block = `
-                <div class="course-block mb-3 dashboard-course-item">
+                <div class="course-block mb-3 dashboard-course-item dashboard-search-target">
                     <div class="d-flex justify-content-between flex-wrap">
                         <div class="pe-3">
                             <h6 class="fw-semibold mb-1">${courseTitle}</h6>
@@ -432,12 +440,18 @@
             }
         }
 
-        // Search functionality for enrolled courses (student dashboard)
-        $('#enrolledSearchInput').on('keyup', function() {
-            const searchTerm = $(this).val().toLowerCase();
-            $('.dashboard-course-item').each(function() {
-                const courseText = $(this).text().toLowerCase();
-                $(this).toggle(courseText.indexOf(searchTerm) > -1);
+        // Global dashboard search (all roles)
+        $('#dashboardGlobalSearch').on('keyup', function() {
+            const searchTerm = ($(this).val() || '').toLowerCase().trim();
+
+            if (!searchTerm) {
+                $('.dashboard-search-target').show();
+                return;
+            }
+
+            $('.dashboard-search-target').each(function() {
+                const text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(searchTerm) > -1);
             });
         });
     });

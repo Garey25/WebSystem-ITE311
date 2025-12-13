@@ -39,6 +39,7 @@ $routes->get('materials/download/(:num)', 'Materials::download/$1', ['filter' =>
 // Notifications routes
 $routes->get('notifications', 'Notifications::get', ['filter' => 'auth']);
 $routes->post('notifications/mark_read/(:num)', 'Notifications::mark_as_read/$1', ['filter' => 'auth']);
+$routes->post('notifications/delete/(:num)', 'Notifications::delete/$1', ['filter' => 'auth']);
 
 // Additional protected routes (will be implemented later)
 $routes->group('', ['filter' => 'auth'], function($routes) {
@@ -49,6 +50,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
         $routes->post('users/update-role', 'Admin::updateRole');
         $routes->post('users/toggle-status', 'Admin::toggleStatus');
         $routes->post('users/change-password', 'Admin::changePassword');
+        $routes->get('search', 'Admin::search');
         $routes->get('courses', 'Admin::courses');
         $routes->post('courses/add', 'Admin::addCourse');
         $routes->post('courses/update', 'Admin::updateCourse');
@@ -60,6 +62,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->group('teacher', function($routes) {
         $routes->get('students', 'Teacher::students');
         $routes->post('students/enroll', 'Teacher::enrollStudent');
+        $routes->get('search', 'Teacher::search');
         $routes->get('enrollments', 'Teacher::enrollments');
         $routes->post('enrollments/update/(:num)/(:segment)', 'Teacher::updateEnrollmentStatus/$1/$2');
     });
@@ -67,6 +70,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     // Student routes
     $routes->group('student', function($routes) {
         $routes->get('enrollments', 'Student::enrollments');
+        $routes->get('search', 'Student::search');
         $routes->get('grades', 'Student::grades');
         $routes->get('progress', 'Student::progress');
     });

@@ -65,12 +65,17 @@ class Auth extends BaseController
         // Successful login - regenerate session for security
         session()->regenerate();
         
+        $role = strtolower(trim((string) ($user['role'] ?? 'student')));
+        if (!in_array($role, ['student', 'teacher', 'admin'], true)) {
+            $role = 'student';
+        }
+
         // Set comprehensive session data
         $sessionData = [
             'user_id' => $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'role' => $user['role'] ?? 'student',
+            'role' => $role,
             'isLoggedIn' => true,
             'login_time' => time(),
         ];
@@ -78,10 +83,10 @@ class Auth extends BaseController
         session()->set($sessionData);
 
         // Log successful login
-        log_message('info', 'Login successful for user: ' . $user['email'] . ' with role: ' . ($user['role'] ?? 'student'));
+        log_message('info', 'Login successful for user: ' . $user['email'] . ' with role: ' . $role);
 
         // Redirect to unified dashboard for all users
-        return redirect()->to(site_url('dashboard'))->with('success', 'Welcome back, ' . $user['name'] . '! You are logged in as ' . ucfirst($user['role'] ?? 'student'));
+        return redirect()->to(site_url('dashboard'))->with('success', 'Welcome back, ' . $user['name'] . '! You are logged in as ' . ucfirst($role));
     }
 
     private function requireLogin()

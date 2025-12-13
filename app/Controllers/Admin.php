@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\EnrollmentModel;
+use App\Models\MaterialModel;
 use App\Models\UserModel;
 use App\Models\CourseModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -11,11 +13,15 @@ class Admin extends BaseController
 {
     protected $userModel;
     protected $courseModel;
+    protected $enrollmentModel;
+    protected $materialModel;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->courseModel = new CourseModel();
+        $this->enrollmentModel = new EnrollmentModel();
+        $this->materialModel = new MaterialModel();
     }
 
     /**
@@ -31,6 +37,84 @@ class Admin extends BaseController
             redirect()->to(site_url('dashboard'))->with('error', 'Access denied. Admin only.')->send();
             exit;
         }
+    }
+
+    public function search()
+    {
+        $this->checkAdmin();
+
+        $q = trim((string) $this->request->getGet('q'));
+
+        $limit = 25;
+
+        $users = [];
+        $courses = [];
+        $enrollments = [];
+        $materials = [];
+
+        if ($q !== '') {
+            $users = $this->userModel
+                ->groupStart()
+                    ->like('name', $q)
+                    ->orLike('email', $q)
+                    ->orLike('role', $q)
+                ->groupEnd()
+                ->orderBy('created_at', 'DESC')
+                ->findAll($limit);
+
+            $db = \Config\Database::connect();
+
+            $courses = $db->table('courses c')
+                ->select('c.*, u.name as teacher_name')
+                ->join('users u', 'u.id = c.teacher_id', 'left')
+                ->groupStart()
+                    ->like('c.code', $q)
+                    ->orLike('c.title', $q)
+                    ->orLike('u.name', $q)
+                ->groupEnd()
+                ->orderBy('c.created_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResultArray();
+
+            $enrollments = $db->table('enrollments e')
+                ->select('e.*, u.name as student_name, u.email as student_email, c.title as course_title, c.code as course_code')
+                ->join('users u', 'u.id = e.user_id')
+                ->join('courses c', 'c.id = e.course_id')
+                ->groupStart()
+                    ->like('u.name', $q)
+                    ->orLike('u.email', $q)
+                    ->orLike('c.title', $q)
+                    ->orLike('c.code', $q)
+                    ->orLike('e.status', $q)
+                ->groupEnd()
+                ->orderBy('e.enrolled_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResultArray();
+
+            $materials = $db->table('materials m')
+                ->select('m.*, c.title as course_title, c.code as course_code')
+                ->join('courses c', 'c.id = m.course_id')
+                ->groupStart()
+                    ->like('m.file_name', $q)
+                    ->orLike('c.title', $q)
+                    ->orLike('c.code', $q)
+                ->groupEnd()
+                ->orderBy('m.created_at', 'DESC')
+                ->limit($limit)
+                ->get()
+                ->getResultArray();
+        }
+
+        return view('admin/search', [
+            'title' => 'Admin Search',
+            'q' => $q,
+            'users' => $users,
+            'courses' => $courses,
+            'enrollments' => $enrollments,
+            'materials' => $materials,
+        ]);
     }
 
     public function courses()
@@ -327,11 +411,12 @@ class Admin extends BaseController
             ]);
         }
 
+        $role = strtolower(trim((string) $this->request->getPost('role')));
         $data = [
             'name' => esc($this->request->getPost('name')),
             'email' => esc($this->request->getPost('email')),
             'password' => $this->request->getPost('password'),
-            'role' => esc($this->request->getPost('role')),
+            'role' => $role,
             'status' => 'active',
             'is_protected' => 0,
         ];
@@ -366,7 +451,7 @@ class Admin extends BaseController
 
         // Allow both AJAX and regular POST requests
         $userId = $this->request->getPost('user_id');
-        $newRole = $this->request->getPost('role');
+        $newRole = strtolower(trim((string) $this->request->getPost('role')));
 
         if (!$userId || !$newRole) {
             if ($this->request->isAJAX()) {
@@ -401,7 +486,7 @@ class Admin extends BaseController
         }
 
         try {
-            $data = ['role' => esc($newRole)];
+            $data = ['role' => $newRole];
             if ($this->userModel->update($userId, $data)) {
                 if ($this->request->isAJAX()) {
                     return $this->response->setJSON([

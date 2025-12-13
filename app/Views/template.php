@@ -68,11 +68,22 @@
         .form-select {
             background-color: rgba(234, 226, 183, 0.1);
             border: 1px solid rgba(247, 127, 0, 0.3);
-            color: #EAE2B7;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.75);
+        }
+        .form-select {
+            --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23FFFFFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        }
+        .form-select option {
+            color: #003049;
+            background-color: #EAE2B7;
         }
         .form-control:focus {
             background-color: rgba(234, 226, 183, 0.15);
-            color: #EAE2B7;
+            color: #ffffff;
             border-color: #F77F00;
             box-shadow: 0 0 0 0.2rem rgba(247, 127, 0, 0.25);
         }
@@ -99,6 +110,58 @@
         }
         .badge.bg-danger {
             background-color: #D62828 !important;
+        }
+        #notification-list {
+            min-width: 340px;
+        }
+        #notification-list .dropdown-item {
+            padding: 0;
+        }
+        #notification-list .notification-box {
+            margin: 0.35rem;
+            padding: 0.5rem 0.65rem;
+            border-radius: 10px;
+            border: 1px solid rgba(252, 191, 73, 0.35);
+            background: rgba(0, 0, 0, 0.35);
+            color: #ffffff;
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+        #notification-list .notification-box.unread {
+            background: rgba(247, 127, 0, 0.22);
+            border-color: rgba(247, 127, 0, 0.75);
+        }
+        #notification-list .notification-message {
+            margin: 0;
+            font-weight: 600;
+        }
+        #notification-list .notification-meta {
+            display: block;
+            margin-top: 0.15rem;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        #notification-list .mark-read-btn {
+            margin-top: 0.35rem;
+            padding: 0.15rem 0.45rem;
+            font-size: 0.75rem;
+        }
+        #notification-list .notification-actions {
+            display: flex;
+            gap: 0.35rem;
+            align-items: center;
+            margin-top: 0.35rem;
+        }
+        #notification-list .delete-notif-btn {
+            padding: 0.15rem 0.45rem;
+            font-size: 0.75rem;
+            border-color: rgba(214, 40, 40, 0.8);
+            color: #ffffff;
+        }
+        #notification-list .delete-notif-btn:hover {
+            background-color: rgba(214, 40, 40, 0.9);
+            border-color: rgba(214, 40, 40, 0.9);
+            color: #ffffff;
         }
     </style>
 </head>
@@ -127,12 +190,50 @@
                     </li>
                     <li class="nav-item"><a class="nav-link <?= uri_string() == 'dashboard' ? 'active' : '' ?>" href="<?= site_url('dashboard') ?>">Dashboard</a></li>
                     <?php if ($role === 'admin'): ?>
+                        <li class="nav-item d-flex align-items-center me-2">
+                            <form class="d-flex" method="get" action="<?= site_url('admin/search') ?>" role="search">
+                                <input
+                                    type="search"
+                                    class="form-control form-control-sm me-2"
+                                    name="q"
+                                    placeholder="Search..."
+                                    value="<?= esc(service('request')->getGet('q') ?? '') ?>"
+                                >
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </form>
+                        </li>
                         <li class="nav-item"><a class="nav-link <?= uri_string() == 'admin/users' ? 'active' : '' ?>" href="<?= site_url('admin/users') ?>">Users</a></li>
                         <li class="nav-item"><a class="nav-link <?= uri_string() == 'admin/courses' ? 'active' : '' ?>" href="<?= site_url('admin/courses') ?>">Courses</a></li>
                     <?php elseif ($role === 'teacher'): ?>
+                        <li class="nav-item d-flex align-items-center me-2">
+                            <form class="d-flex" method="get" action="<?= site_url('teacher/search') ?>" role="search">
+                                <input
+                                    type="search"
+                                    class="form-control form-control-sm me-2"
+                                    name="q"
+                                    placeholder="Search..."
+                                    value="<?= esc(service('request')->getGet('q') ?? '') ?>"
+                                >
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </form>
+                        </li>
                         <li class="nav-item"><a class="nav-link <?= uri_string() == 'teacher/students' ? 'active' : '' ?>" href="<?= site_url('teacher/students') ?>">Students</a></li>
                     <?php elseif ($role === 'student'): ?>
-                        <li class="nav-item"><a class="nav-link" href="#">My Enrollments</a></li>
+                        <li class="nav-item d-flex align-items-center me-2">
+                            <form class="d-flex" method="get" action="<?= site_url('student/search') ?>" role="search">
+                                <input
+                                    type="search"
+                                    class="form-control form-control-sm me-2"
+                                    name="q"
+                                    placeholder="Search..."
+                                    value="<?= esc(service('request')->getGet('q') ?? '') ?>"
+                                >
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </form>
+                        </li>
+                        <li class="nav-item"><a class="nav-link <?= uri_string() == 'student/enrollments' ? 'active' : '' ?>" href="<?= site_url('student/enrollments') ?>">My Enrollments</a></li>
+                        <li class="nav-item"><a class="nav-link <?= uri_string() == 'student/grades' ? 'active' : '' ?>" href="<?= site_url('student/grades') ?>">Grades</a></li>
+                        <li class="nav-item"><a class="nav-link <?= uri_string() == 'student/progress' ? 'active' : '' ?>" href="<?= site_url('student/progress') ?>">Progress</a></li>
                     <?php endif; ?>
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('logout') ?>">Logout</a></li>
                 <?php else: ?>
@@ -172,10 +273,14 @@ function fetchNotifications() {
         }
         response.notifications.forEach(function(n) {
             const item = $('<li>');
-            const box = $('<div>').addClass('alert ' + (n.is_read == 0 ? 'alert-info' : 'alert-secondary') + ' m-2 mb-0');
-            box.html('<p class="mb-1">' + n.message + '</p>' +
-                     '<small class="text-muted">' + new Date(n.created_at).toLocaleString() + '</small>' +
-                     (n.is_read == 0 ? '<button class="btn btn-sm btn-outline-primary mt-2 mark-read-btn" data-id="' + n.id + '">Mark as Read</button>' : ''));
+            const box = $('<div>').addClass('notification-box ' + (n.is_read == 0 ? 'unread' : 'read'));
+            const actions = '<div class="notification-actions">' +
+                (n.is_read == 0 ? '<button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="' + n.id + '">Mark as Read</button>' : '') +
+                '<button class="btn btn-sm btn-outline-danger delete-notif-btn" data-id="' + n.id + '">Delete</button>' +
+                '</div>';
+            box.html('<p class="notification-message">' + n.message + '</p>' +
+                     '<small class="notification-meta">' + new Date(n.created_at).toLocaleString() + '</small>' +
+                     actions);
             item.append(box);
             list.append(item);
         });
@@ -186,10 +291,19 @@ function markAsRead(id) {
         if (response.success) fetchNotifications();
     });
 }
+function deleteNotification(id) {
+    $.post('<?= site_url('notifications/delete') ?>/' + id, function(response) {
+        if (response.success) fetchNotifications();
+    });
+}
 $(document).ready(function() {
     fetchNotifications();
     $(document).on('click', '.mark-read-btn', function() {
         markAsRead($(this).data('id'));
+    });
+    $(document).on('click', '.delete-notif-btn', function(e) {
+        e.preventDefault();
+        deleteNotification($(this).data('id'));
     });
 });
 </script>
